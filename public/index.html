@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Employee Cards</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+<header class="topbar">
+  <h1>Employee Cards</h1>
+  <a class="btn ghost" href="sample/employees-sample.xlsx" download>Sample Excel download</a>
+</header>
+
+<main>
+  <section class="panel">
+    <h2>Excel import</h2>
+    <p class="hint">Columns: <b>ID</b>, <b>Name</b>, <b>Designation</b>, <b>Residential Address</b>, <b>CNIC No</b>.
+      Designation / address mein 2 lines ke liye <code>|</code> lagayein. Same ID dobara import ho to data update ho jayega (photo safe rahegi).</p>
+    <form id="importForm" class="row">
+      <input type="file" name="file" accept=".xlsx,.xls,.csv" required />
+      <button class="btn" type="submit">Import</button>
+    </form>
+    <div id="importMsg" class="msg"></div>
+  </section>
+
+  <section class="panel">
+    <div class="row between">
+      <h2>Employees (<span id="count">0</span>)</h2>
+      <input id="search" type="search" placeholder="Search name / ID / CNIC" />
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Photo</th><th>ID</th><th>Name</th><th>Designation</th><th>Residential Address</th><th>CNIC No</th><th>Actions</th></tr>
+        </thead>
+        <tbody id="rows"><tr><td colspan="7" class="empty">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+
+<input type="file" id="photoInput" accept="image/*" hidden />
+
+<script>
+const $ = (s) => document.querySelector(s);
+let employees = [];
+let photoTarget = null;
+
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+async function load() {
+  employees = await (await fetch('/api/employees')).json();
+  render();
+}
+
+function render() {
+  const q = $('#search').value.trim().toLowerCase();
+  const list = employees.filter((e) => !q || [e.id, e.name, e.cnic, e.designation].join(' ').toLowerCase().includes(q));
+  $('#count').textContent = employees.length;
+  if (!list.length) {
+    $('#rows').innerHTML = `<tr><td colspan="7" class="empty">${employees.length ? 'Koi match nahi' : 'Abhi koi employee nahi — Excel import karein'}</td></tr>`;
+    return;
+  }
+  $('#rows').innerHTML = list.map((e) => `
+    <tr>
+      <td>${e.photo ? `<img class="thumb" src="/${esc(e.photo)}" alt="">` : '<div class="thumb none">No photo</div>'}</td>
+      <td>${esc(e.id)}</td>
+      <td><b>${esc(e.name)}</b></td>
+      <td>${esc(e.designation)}</td>
+      <td>${esc(e.address)}</td>
+      <td class="nowrap">${esc(e.cnic)}</td>
+      <td class="actions">
+        <button class="btn small ghost" data-photo="${esc(e.id)}">${e.photo ? 'Change image' : 'Import image'}</button>
+        <a class="btn small" href="card.html?id=${encodeURIComponent(e.id)}" target="_blank">Generate card</a>
+        <button class="btn small danger" data-del="${esc(e.id)}">Delete</button>
+      </td>
+    </tr>`).join('');
+}
+
+$('#importForm').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const msg = $('#importMsg');
+  msg.className = 'msg';
+  msg.textContent = 'Importing…';
+  const res = await fetch('/api/import', { method: 'POST', body: new FormData(ev.target) });
+  const data = await res.json();
+  if (!res.ok) {
+    msg.className = 'msg error';
+    msg.textContent = data.error;
+    return;
+  }
+  msg.className = 'msg ok';
+  msg.textContent = `${data.imported} employees import ho gaye.` +
+    (data.skipped.length ? ` Rows skip hui (ID ya Name missing): ${data.skipped.join(', ')}` : '');
+  ev.target.reset();
+  load();
+});
+
+$('#rows').addEventListener('click', async (ev) => {
+  const photoBtn = ev.target.closest('[data-photo]');
+  const delBtn = ev.target.closest('[data-del]');
+  if (photoBtn) {
+    photoTarget = photoBtn.dataset.photo;
+    $('#photoInput').value = '';
+    $('#photoInput').click();
+  } else if (delBtn && confirm(`Employee ${delBtn.dataset.del} delete karna hai?`)) {
+    await fetch(`/api/employees/${encodeURIComponent(delBtn.dataset.del)}`, { method: 'DELETE' });
+    load();
+  }
+});
+
+$('#photoInput').addEventListener('change', async (ev) => {
+  const file = ev.target.files[0];
+  if (!file || !photoTarget) return;
+  const fd = new FormData();
+  fd.append('photo', file);
+  const res = await fetch(`/api/employees/${encodeURIComponent(photoTarget)}/photo`, { method: 'POST', body: fd });
+  if (!res.ok) alert((await res.json()).error);
+  load();
+});
+
+$('#search').addEventListener('input', render);
+load();
+</script>
+</body>
+</html>

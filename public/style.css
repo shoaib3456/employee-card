@@ -1,0 +1,29 @@
+* { box-sizing: border-box; }
+body { margin: 0; font-family: "Segoe UI", Arial, sans-serif; background: #f4f5f7; color: #1d1d1f; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; background: #fff; border-bottom: 3px solid #d42a2f; }
+.topbar h1 { margin: 0; font-size: 20px; }
+main { max-width: 1250px; margin: 20px auto; padding: 0 16px; }
+.panel { background: #fff; border-radius: 10px; padding: 18px 20px; margin-bottom: 18px; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+.panel h2 { margin: 0 0 10px; font-size: 17px; }
+.hint { color: #555; font-size: 13px; margin: 0 0 12px; }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.between { justify-content: space-between; }
+input[type=search] { padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; min-width: 240px; }
+.btn { display: inline-block; border: 0; background: #d42a2f; color: #fff; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 14px; text-decoration: none; white-space: nowrap; }
+.btn:hover { background: #b51f24; }
+.btn.ghost { background: #fff; color: #d42a2f; border: 1px solid #d42a2f; }
+.btn.ghost:hover { background: #fdecec; }
+.btn.danger { background: #555; }
+.btn.small { padding: 5px 10px; font-size: 12.5px; }
+.msg { margin-top: 10px; font-size: 14px; }
+.msg.ok { color: #1b7f3b; }
+.msg.error { color: #c0161b; }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #eee; vertical-align: middle; }
+th { background: #fafafa; font-weight: 600; }
+.thumb { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #d42a2f; display: block; }
+.thumb.none { display: flex; align-items: center; justify-content: center; font-size: 9px; color: #999; border-color: #ddd; text-align: center; }
+.actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.nowrap { white-space: nowrap; }
+.empty { text-align: center; color: #888; padding: 30px; }

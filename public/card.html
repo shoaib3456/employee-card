@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Employee Card</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Great+Vibes&display=swap" rel="stylesheet" />
+<style>
+  /* Card is laid out in its original 229.5 x 364.5 px coordinates and scaled up for screen */
+  :root { --s: 1.6; --red: #d42a2f; --ink: #211d1d; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #9e9e9e; font-family: Montserrat, Arial, sans-serif; }
+  .toolbar { display: flex; gap: 10px; justify-content: center; padding: 14px; background: #fff; border-bottom: 3px solid var(--red); }
+  .toolbar button, .toolbar a { border: 0; background: var(--red); color: #fff; padding: 8px 16px; border-radius: 6px; font: 600 14px Arial, sans-serif; cursor: pointer; text-decoration: none; }
+  .toolbar a { background: #555; }
+  .sheet { display: flex; gap: 30px; justify-content: center; flex-wrap: wrap; padding: 30px 16px; }
+  .slot { width: calc(229.5px * var(--s)); height: calc(364.5px * var(--s)); box-shadow: 1px 1px 6px rgba(0,0,0,.45); background: #fff; }
+  .card { position: relative; width: 229.5px; height: 364.5px; overflow: hidden; background: #fff; color: var(--ink);
+          transform: scale(var(--s)); transform-origin: 0 0; }
+  .card > .bg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .abs { position: absolute; left: 0; right: 0; text-align: center; line-height: 1; white-space: nowrap; }
+
+  /* Front */
+  .photo-ring { position: absolute; left: 42px; top: 31px; width: 145px; height: 145px; border-radius: 50%;
+                border: 3px solid var(--red); background: #fff; overflow: hidden; }
+  .photo-ring img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .photo-ring .placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+                             font-size: 40px; font-weight: 700; color: #ccc; background: #f3f3f3; }
+  .emp-id { top: 177px; color: #fff; font-weight: 600; font-size: 11.6px; letter-spacing: .6px; }
+  .emp-name { top: 214px; font-weight: 800; font-size: 24.6px; color: #100f0d; letter-spacing: -.4px; padding: 0 10px; }
+  .emp-desig { top: 260px; font-weight: 600; font-size: 10.5px; line-height: 15.9px; color: #100f0d; letter-spacing: -.2px; }
+
+  /* Back */
+  .lbl { font-weight: 700; font-size: 12px; letter-spacing: -.2px; }
+  .val { font-weight: 600; font-size: 10.5px; line-height: 12.6px; letter-spacing: -.2px; white-space: normal; padding: 0 22px; }
+  .addr-lbl { top: 78px; }
+  .addr { top: 95px; }
+  .cnic-lbl { top: 145px; }
+  .cnic { top: 162px; }
+  .sign { top: 190px; font-family: "Great Vibes", cursive; font-size: 32px; transform: rotate(-13deg); color: var(--ink); }
+  .auth { top: 236px; font-weight: 700; font-size: 9px; letter-spacing: 2.2px; }
+  .ret1 { top: 274px; font-weight: 600; font-size: 6px; }
+  .ret2 { top: 285px; font-weight: 600; font-size: 9px; letter-spacing: -.4px; }
+  .ret3 { top: 298px; font-weight: 600; font-size: 9px; letter-spacing: -.4px; }
+  .web, .phone { top: 333px; font-size: 6px; font-weight: 600; text-align: left; right: auto; }
+  .web { left: 37px; }
+  .phone { left: 155.5px; }
+
+  .error { text-align: center; color: #fff; font: 18px Arial, sans-serif; padding: 60px; }
+
+  @media print {
+    @page { size: 229.5px 364.5px; margin: 0; }
+    body { background: #fff; }
+    .toolbar { display: none; }
+    .sheet { display: block; padding: 0; }
+    .slot { width: 229.5px; height: 364.5px; box-shadow: none; page-break-after: always; break-after: page; }
+    .card { transform: none; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+<div class="toolbar">
+  <button onclick="window.print()">Print / Save as PDF</button>
+  <a href="/">Back to list</a>
+</div>
+
+<div class="sheet" id="sheet"></div>
+
+<template id="tpl">
+  <div class="slot">
+    <div class="card front">
+      <img class="bg" src="assets/front.png" alt="" />
+      <div class="photo-ring" data-photo></div>
+      <div class="abs emp-id">ID: <span data-f="id"></span></div>
+      <div class="abs emp-name" data-f="name"></div>
+      <div class="abs emp-desig" data-f="designation"></div>
+    </div>
+  </div>
+  <div class="slot">
+    <div class="card back">
+      <img class="bg" src="assets/back.png" alt="" />
+      <div class="abs lbl addr-lbl">Residential Address:</div>
+      <div class="abs val addr" data-f="address"></div>
+      <div class="abs lbl cnic-lbl">CNIC No:</div>
+      <div class="abs val cnic" data-f="cnic"></div>
+      <div class="abs sign">Humaira</div>
+      <div class="abs auth">AUTHORIZED SIGNATORY</div>
+      <div class="abs ret1">IF FOUND PLEASE RETURN TO THE ADDRESS</div>
+      <div class="abs ret2">40-C, STREET 1, KHALID COMMERCIAL,</div>
+      <div class="abs ret3">PHASE 7 EXT, DHA, KARACHI</div>
+      <div class="abs web">www.alphatach.com</div>
+      <div class="abs phone">+92 324 3179505</div>
+    </div>
+  </div>
+</template>
+
+<script>
+// "|" or a line break in Excel splits a value onto separate lines on the card
+const lines = (s) => String(s || '').split(/\s*(?:\||\r?\n)\s*/).filter(Boolean);
+
+function fill(el, text) {
+  el.textContent = '';
+  lines(text).forEach((line, i) => {
+    if (i) el.appendChild(document.createElement('br'));
+    el.appendChild(document.createTextNode(line.toUpperCase()));
+  });
+}
+
+// Shrink long names so they stay on one line inside the card
+function fitWidth(el) {
+  let size = parseFloat(getComputedStyle(el).fontSize);
+  while (el.scrollWidth > el.clientWidth && size > 10) {
+    size -= 0.5;
+    el.style.fontSize = size + 'px';
+  }
+}
+
+(async () => {
+  const id = new URLSearchParams(location.search).get('id');
+  const res = await fetch('/api/employees/' + encodeURIComponent(id || ''));
+  const sheet = document.getElementById('sheet');
+  if (!res.ok) {
+    sheet.innerHTML = '<div class="error">Employee nahi mila</div>';
+    return;
+  }
+  const emp = await res.json();
+  document.title = `${emp.name} - Employee Card`;
+  sheet.appendChild(document.getElementById('tpl').content.cloneNode(true));
+
+  sheet.querySelector('[data-f=id]').textContent = emp.id;
+  fill(sheet.querySelector('[data-f=name]'), emp.name);
+  fill(sheet.querySelector('[data-f=designation]'), emp.designation);
+  fill(sheet.querySelector('[data-f=address]'), emp.address);
+  sheet.querySelector('[data-f=cnic]').textContent = emp.cnic;
+
+  const ring = sheet.querySelector('[data-photo]');
+  if (emp.photo) {
+    const img = document.createElement('img');
+    img.src = '/' + emp.photo;
+    ring.appendChild(img);
+  } else {
+    ring.innerHTML = `<div class="placeholder">${emp.name.split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase()}</div>`;
+  }
+
+  await document.fonts.ready;
+  fitWidth(sheet.querySelector('.emp-name'));
+})();
+</script>
+</body>
+</html>

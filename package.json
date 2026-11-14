@@ -1,0 +1,18 @@
+{
+  "name": "employee-card",
+  "version": "1.0.0",
+  "description": "Excel se employees import karo, photo lagao, employee card generate karo",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "sample": "node scripts/make-sample.js"
+  },
+  "engines": {
+    "node": ">=22.5"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "multer": "^1.4.5-lts.1",
+    "xlsx": "^0.18.5"
+  }
+}

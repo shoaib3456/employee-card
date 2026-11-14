@@ -1,99 +1,351 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<title>Employee Card</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700;800&family=Great+Vibes&display=swap" rel="stylesheet" />
-<style>
-  /* Card is laid out in its original 229.5 x 364.5 px coordinates and scaled up for screen */
-  :root { --s: 1.6; --red: #d42a2f; --ink: #211d1d; }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: #9e9e9e; font-family: Montserrat, Arial, sans-serif; }
-  .toolbar { display: flex; gap: 10px; justify-content: center; padding: 14px; background: #fff; border-bottom: 3px solid var(--red); }
-  .toolbar button, .toolbar a { border: 0; background: var(--red); color: #fff; padding: 8px 16px; border-radius: 6px; font: 600 14px Arial, sans-serif; cursor: pointer; text-decoration: none; }
-  .toolbar a { background: #555; }
-  .sheet { display: flex; gap: 30px; justify-content: center; flex-wrap: wrap; padding: 30px 16px; }
-  .slot { width: calc(229.5px * var(--s)); height: calc(364.5px * var(--s)); box-shadow: 1px 1px 6px rgba(0,0,0,.45); background: #fff; }
-  .card { position: relative; width: 229.5px; height: 364.5px; overflow: hidden; background: #fff; color: var(--ink);
-          transform: scale(var(--s)); transform-origin: 0 0; }
-  .card > .bg { position: absolute; inset: 0; width: 100%; height: 100%; }
-  .abs { position: absolute; left: 0; right: 0; text-align: center; line-height: 1; white-space: nowrap; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Employee Card</title>
 
-  /* Front */
-  .photo-ring { position: absolute; left: 42px; top: 31px; width: 145px; height: 145px; border-radius: 50%;
-                border: 3px solid var(--red); background: #fff; overflow: hidden; }
-  .photo-ring img { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .photo-ring .placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
-                             font-size: 40px; font-weight: 700; color: #ccc; background: #f3f3f3; }
-  .emp-id { top: 177px; color: #fff; font-weight: 600; font-size: 11.6px; letter-spacing: .6px; }
-  .emp-name { top: 214px; font-weight: 800; font-size: 24.6px; color: #100f0d; letter-spacing: -.4px; padding: 0 10px; }
-  .emp-desig { top: 260px; font-weight: 600; font-size: 10.5px; line-height: 15.9px; color: #100f0d; letter-spacing: -.2px; }
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-  /* Back */
-  .lbl { font-weight: 700; font-size: 12px; letter-spacing: -.2px; }
-  .val { font-weight: 600; font-size: 10.5px; line-height: 12.6px; letter-spacing: -.2px; white-space: normal; padding: 0 22px; }
-  .addr-lbl { top: 78px; }
-  .addr { top: 95px; }
-  .cnic-lbl { top: 145px; }
-  .cnic { top: 162px; }
-  .sign { top: 190px; font-family: "Great Vibes", cursive; font-size: 32px; transform: rotate(-13deg); color: var(--ink); }
-  .auth { top: 236px; font-weight: 700; font-size: 9px; letter-spacing: 2.2px; }
-  .ret1 { top: 274px; font-weight: 600; font-size: 6px; }
-  .ret2 { top: 285px; font-weight: 600; font-size: 9px; letter-spacing: -.4px; }
-  .ret3 { top: 298px; font-weight: 600; font-size: 9px; letter-spacing: -.4px; }
-  .web, .phone { top: 333px; font-size: 6px; font-weight: 600; text-align: left; right: auto; }
-  .web { left: 37px; }
-  .phone { left: 155.5px; }
+  <style>
+    /*
+      Built from "Fasih Uddin.pdf" (2 pages, 153 × 243 pt each).
+      Scale: 1 pt = 2 px, so each card is 306 × 486 px.
+      All positions below come straight from the PDF.
+    */
+    @font-face {
+      font-family: "Amostely Signature";
+      src: url("assets/fonts/amostely-signature.ttf") format("truetype");
+    }
 
-  .error { text-align: center; color: #fff; font: 18px Arial, sans-serif; padding: 60px; }
+    :root {
+      --red: #c1272d;
+      --red-line: #ee2327;
+      --ink-front: #030505;
+      --ink-back: #221f20;
+    }
 
-  @media print {
-    @page { size: 229.5px 364.5px; margin: 0; }
-    body { background: #fff; }
-    .toolbar { display: none; }
-    .sheet { display: block; padding: 0; }
-    .slot { width: 229.5px; height: 364.5px; box-shadow: none; page-break-after: always; break-after: page; }
-    .card { transform: none; }
-    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  }
-</style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 40px;
+      padding: 40px 16px;
+      background: #e9e9ec;
+      font-family: "Poppins", sans-serif;
+    }
+
+    /* ---------- Card shell ---------- */
+    .card {
+      position: relative;
+      flex: none;
+      width: 306px;
+      height: 486px;
+      overflow: hidden;
+      background: #fff;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, .12);
+    }
+    .card--front { color: var(--ink-front); }
+    .card--back  { color: var(--ink-back); }
+
+    /* Full-card SVG layers (viewBox is in PDF points) */
+    .layer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+      pointer-events: none;
+    }
+    .watermark { opacity: .06; }
+
+    .abs { position: absolute; }
+
+    /* Single-line text: line-height 1.4 = Poppins ascent + descent,
+       so `top` = baseline − 1.05em. */
+    .line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      text-align: center;
+      line-height: 1.4;
+      white-space: nowrap;
+    }
+
+    .logo { position: absolute; display: block; }
+
+    /* ---------- Front ---------- */
+    .ribbon {
+      left: 106.04px;
+      top: 0;
+      width: 93.92px;
+      height: 267.66px;
+      border-radius: 0 0 15.52px 15.52px;
+      background: var(--red);
+    }
+
+    .photo {
+      left: 56.98px;
+      top: 40.28px;
+      width: 192.04px;
+      height: 192.04px;
+      border: 3.1px solid var(--red);
+      border-radius: 50%;
+      overflow: hidden;
+      background: #fff;
+    }
+    .photo img {
+      position: absolute;
+      left: -4.73px;
+      top: -5.94px;
+      width: 239.17px;
+      height: 318.63px;
+    }
+
+    .emp-id {
+      left: 124.04px;
+      right: auto;
+      top: 238.33px;
+      font-size: 15.48px;
+      font-weight: 700;
+      letter-spacing: .057em;
+      color: #fff;
+    }
+
+    .name {
+      top: 282.3px;
+      font-size: 32.8px;
+      font-weight: 800;
+      letter-spacing: -.019em;
+    }
+
+    .name-rule {
+      left: 56.6px;
+      top: 331.94px;
+      width: 192.8px;
+      height: 2px;
+      background: var(--red);
+      clip-path: polygon(0 50%, 50% 0, 100% 50%, 50% 100%);
+    }
+
+    .designation {
+      top: 344.02px;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.52;
+      letter-spacing: -.019em;
+    }
+
+    .card--front .logo { left: 93.6px; top: 413.94px; width: 118.48px; height: 49.48px; }
+
+    /* ---------- Back ---------- */
+    .card--back .logo { left: 94.98px; top: 29.8px; width: 115.72px; height: 48.34px; color: #000; }
+
+    .label {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -.019em;
+    }
+    .value {
+      font-size: 14px;
+      font-weight: 300;
+      letter-spacing: -.019em;
+    }
+
+    .address-label { top: 102.16px; }
+    .address       { top: 127.38px; line-height: 1.2; }
+    .cnic-label    { top: 192.4px; }
+    .cnic          { top: 216.22px; }
+
+    .signature {
+      font-family: "Amostely Signature", cursive;
+      font-size: 21.44px;
+      fill: currentColor;
+    }
+
+    .sign-rule {
+      left: 29.66px;
+      top: 305.22px;
+      width: 246.7px;
+      height: 1.48px;
+      background: var(--red-line);
+    }
+
+    .sign-caption {
+      top: 316.88px;
+      padding-left: .1em; /* balance trailing letter-spacing */
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: .1em;
+    }
+
+    .return-note {
+      top: 365.94px;
+      font-size: 8px;
+      font-weight: 300;
+    }
+
+    .return-address {
+      top: 380.2px;
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 1.5;
+      letter-spacing: -.019em;
+    }
+
+    .contact {
+      position: absolute;
+      top: 442.7px;
+      white-space: nowrap;
+      font-size: 8px;
+      font-weight: 500;
+      line-height: 1.4;
+    }
+    .contact--web   { left: 49.44px; }
+    .contact--phone { left: 207.26px; }
+
+    .icon { position: absolute; top: 441.7px; width: 13.14px; height: 13.14px; }
+    .icon--web   { left: 32.28px; }
+    .icon--phone { left: 190.88px; }
+
+    /* ---------- App additions: toolbar, uploaded photo, print ---------- */
+    .toolbar { flex-basis: 100%; display: flex; gap: 10px; justify-content: center; }
+    .toolbar button, .toolbar a { border: 0; background: var(--red); color: #fff; padding: 8px 16px; border-radius: 6px; font: 600 14px Arial, sans-serif; cursor: pointer; text-decoration: none; }
+    .toolbar a { background: #555; }
+    .photo img.fit { left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 20%; }
+    .photo .initials { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 56px; font-weight: 700; color: #ccc; background: #f3f3f3; }
+    .error { flex-basis: 100%; text-align: center; font-size: 18px; }
+    .toolbar button.ghost { background: #fff; color: var(--red); border: 1px solid var(--red); }
+    #stage { flex-basis: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 40px; }
+    .pair { display: contents; }
+    .nav { flex-basis: 100%; display: flex; align-items: center; justify-content: center; gap: 16px; font-family: Arial, sans-serif; }
+    .nav[hidden] { display: none; }
+    .nav button { width: 46px; height: 46px; border-radius: 50%; border: 0; background: var(--red); color: #fff; font-size: 22px; cursor: pointer; }
+    .nav button:disabled { background: #bbb; cursor: default; }
+    .nav .info { min-width: 220px; text-align: center; font-size: 14px; color: #333; }
+    .nav .info b { display: block; font-size: 16px; }
+    .nav select { margin-top: 6px; padding: 4px 6px; border-radius: 4px; border: 1px solid #bbb; max-width: 220px; }
+
+    @media print {
+      @page { size: 306px 486px; margin: 0; }
+      body { display: block; padding: 0; background: #fff; min-height: 0; }
+      .toolbar, .nav { display: none !important; }
+      #stage { display: block; }
+      .card { box-shadow: none; break-after: page; page-break-after: always; }
+      * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    }
+  </style>
 </head>
 <body>
-<div class="toolbar">
-  <button onclick="window.print()">Print / Save as PDF</button>
-  <a href="/">Back to list</a>
-</div>
 
-<div class="sheet" id="sheet"></div>
+  <!-- Vector artwork extracted from the PDF (units: pt) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="logo" viewBox="0 0 57.86 24.17">
+    <linearGradient id="logo-g0" gradientUnits="userSpaceOnUse" x1="8.96" y1="19.59" x2="16.26" y2="12.35"><stop offset="0" stop-color="#c1272d"/><stop offset="0.25" stop-color="#c9262c"/><stop offset="0.5" stop-color="#d2262b"/><stop offset="0.75" stop-color="#df2429"/><stop offset="1" stop-color="#ed2327"/></linearGradient><linearGradient id="logo-g1" gradientUnits="userSpaceOnUse" x1="21.81" y1="16.10" x2="28.61" y2="22.58"><stop offset="0" stop-color="#c1272d"/><stop offset="0.25" stop-color="#c9262c"/><stop offset="0.5" stop-color="#d2262b"/><stop offset="0.75" stop-color="#df2429"/><stop offset="1" stop-color="#ed2327"/></linearGradient><linearGradient id="logo-g2" gradientUnits="userSpaceOnUse" x1="9.84" y1="17.45" x2="9.56" y2="3.04"><stop offset="0" stop-color="#c1272d"/><stop offset="0.25" stop-color="#c9262c"/><stop offset="0.5" stop-color="#d2262b"/><stop offset="0.75" stop-color="#df2429"/><stop offset="1" stop-color="#ed2327"/></linearGradient><linearGradient id="logo-g3" gradientUnits="userSpaceOnUse" x1="35.66" y1="19.19" x2="37.97" y2="16.90"><stop offset="0" stop-color="#c1272d"/><stop offset="0.25" stop-color="#c9262c"/><stop offset="0.5" stop-color="#d2262b"/><stop offset="0.75" stop-color="#df2429"/><stop offset="1" stop-color="#ed2327"/></linearGradient><linearGradient id="logo-g4" gradientUnits="userSpaceOnUse" x1="39.73" y1="18.08" x2="41.88" y2="20.13"><stop offset="0" stop-color="#c1272d"/><stop offset="0.25" stop-color="#c9262c"/><stop offset="0.5" stop-color="#d2262b"/><stop offset="0.75" stop-color="#df2429"/><stop offset="1" stop-color="#ed2327"/></linearGradient><linearGradient id="logo-g5" gradientUnits="userSpaceOnUse" x1="35.94" y1="18.51" x2="35.86" y2="13.95"><stop offset="0" stop-color="#c1272d"/><stop offset="0.25" stop-color="#c9262c"/><stop offset="0.5" stop-color="#d2262b"/><stop offset="0.75" stop-color="#df2429"/><stop offset="1" stop-color="#ed2327"/></linearGradient>
+    <path d="M25.87 2.46 C24.33 3.28 23.07 4.56 22 5.94 L22 5.94 C19.74 8.86 18.18 12.29 16 15.27 L16 15.27 C13.81 18.25 10.73 20.87 7.05 21.11 L7.05 21.11 C4.67 21.28 2.22 20.37 0.48 18.68 L0.48 18.68 C0.58 18.78 0.64 19.18 0.7 19.33 L0.7 19.33 C0.79 19.57 0.9 19.79 1.02 20.02 L1.02 20.02 C1.25 20.43 1.52 20.87 1.83 21.22 L1.83 21.22 C2.43 21.92 3.32 22.47 4.12 22.9 L4.12 22.9 C5.8 23.78 7.72 24.17 9.59 23.97 L9.59 23.97 C12.8 23.61 15.6 21.61 17.79 19.23 L17.79 19.23 C20.19 16.63 22.01 13.56 23.87 10.51 L23.87 10.51 C24.87 8.87 25.88 7.24 27.01 5.69 L27.01 5.69 C28.09 4.2 29.32 2.75 30.95 1.9 L30.95 1.9 C30.37 1.7 29.76 1.61 29.15 1.61 L29.15 1.61 C28.01 1.61 26.88 1.93 25.87 2.46" fill="url(#logo-g0)"/>
+    <path d="M22.73 13.86 C21.86 15.16 21 16.46 20.12 17.75 L20.12 17.75 C19.98 17.95 19.96 18.11 20.08 18.32 L20.08 18.32 C20.49 19.07 20.86 19.87 21.34 20.58 L21.34 20.58 C22.01 21.61 22.9 22.41 24.07 22.82 L24.07 22.82 C25.46 23.32 26.84 23.18 28.2 22.78 L28.2 22.78 C28.28 22.76 28.35 22.69 28.41 22.66 L28.41 22.66 C27.99 22.29 27.54 21.98 27.19 21.57 L27.19 21.57 C26.73 21.04 26.32 20.46 25.95 19.87 L25.95 19.87 C24.78 17.99 23.95 15.95 23.23 13.87 L23.23 13.87 C23.19 13.74 23.13 13.62 23.04 13.42 L23.04 13.42 C22.91 13.61 22.82 13.73 22.73 13.86" fill="url(#logo-g1)"/>
+    <path d="M14.93 14.08 C14.86 14.23 14.81 14.39 14.75 14.55 S18.67 9.16 20.46 6.52 C21.47 5.03 22.51 3.58 23.91 2.42 C25.44 1.15 27.16 0.44 29.17 0.46 C29.35 0.46 29.53 0.46 29.71 0.46 C28.1 0.08 26.53 0 25.01 0.68 C23.15 1.51 21.71 2.85 20.52 4.47 C19.9 5.32 19.35 6.22 18.79 7.12 C17.39 9.37 16.07 11.68 14.93 14.08" fill="currentColor"/>
+    <path d="M10.11 1.86 C6.86 3.06 4.08 5.4 2.15 8.3 L2.15 8.3 C1.22 9.7 0.47 11.25 0.23 12.93 L0.23 12.93 C0 14.55 0.31 16.08 1.14 17.32 L1.14 17.32 C1.61 18.02 2.25 18.63 3.06 19.12 L3.06 19.12 C4.13 19.76 5.33 20.16 6.56 20.21 L6.56 20.21 C6.57 20.21 6.59 20.21 6.61 20.2 L6.61 20.2 C6.66 20.2 6.71 20.2 6.74 20.21 L6.74 20.21 C5.81 19.63 5.22 18.6 4.99 17.53 L4.99 17.53 C4.76 16.45 4.85 15.34 5.05 14.27 L5.05 14.27 C5.59 11.39 6.94 8.66 9.06 6.69 L9.06 6.69 C9.95 5.86 11 5.16 12.19 4.85 L12.19 4.85 C12.76 4.7 13.38 4.65 13.95 4.83 L13.95 4.83 C14.73 5.06 15.36 5.69 15.78 6.4 L15.78 6.4 C16.18 7.09 16.41 7.87 16.63 8.64 L16.63 8.64 C16.93 8.13 17.24 7.62 17.55 7.12 L17.55 7.12 C18.11 6.22 18.66 5.32 19.29 4.47 L19.29 4.47 C19.32 4.42 19.36 4.37 19.4 4.32 L19.4 4.32 C19.41 4.29 19.42 4.27 19.42 4.24 L19.42 4.24 C19.42 4.12 19.36 4.01 19.3 3.91 L19.3 3.91 C18.39 2.44 16.76 1.52 15.09 1.24 L15.09 1.24 C14.67 1.17 14.24 1.14 13.81 1.14 L13.81 1.14 C12.55 1.14 11.3 1.42 10.11 1.86" fill="url(#logo-g2)"/>
+    <path d="M31.28 9.66 L30.45 7.65 C30.41 7.56 30.38 7.47 30.34 7.37 C30.3 7.27 30.27 7.18 30.25 7.09 C30.22 7.01 30.19 6.94 30.17 6.88 L30.14 6.8 L30.14 6.8 L30.11 6.88 C30.09 6.94 30.06 7 30.03 7.08 C30.01 7.17 29.98 7.26 29.94 7.36 C29.9 7.46 29.87 7.56 29.83 7.64 L29 9.66 Z M31.65 10.57 L28.63 10.57 L28.03 12.03 L26.93 12.03 L29.66 5.57 L30.62 5.57 L33.35 12.03 L32.25 12.03 Z" fill="currentColor"/>
+    <path d="M38.62 11.07 L38.62 12.03 L34.27 12.03 L34.27 5.56 L35.3 5.56 L35.3 11.07 Z" fill="currentColor"/>
+    <path d="M41.74 8.83 C42.2 8.83 42.55 8.73 42.79 8.52 C43.03 8.32 43.15 8.04 43.15 7.67 C43.15 7.3 43.03 7.01 42.78 6.82 C42.53 6.62 42.19 6.52 41.74 6.52 L40.65 6.52 L40.65 8.83 Z M41.76 5.56 L41.75 5.58 C42.52 5.58 43.12 5.76 43.55 6.13 C43.99 6.5 44.21 7.02 44.21 7.68 C44.21 8.35 44 8.87 43.56 9.24 C43.13 9.61 42.53 9.79 41.76 9.79 L40.65 9.79 L40.65 12.03 L39.62 12.03 L39.62 5.56 Z" fill="currentColor"/>
+    <path d="M50.52 5.56 L50.52 12.03 L49.49 12.03 L49.49 9.19 L46.34 9.19 L46.34 12.03 L45.31 12.03 L45.31 5.56 L46.34 5.56 L46.34 8.24 L49.49 8.24 L49.49 5.56 Z" fill="currentColor"/>
+    <path d="M55.79 9.66 L54.96 7.65 C54.93 7.56 54.89 7.47 54.85 7.37 C54.81 7.27 54.79 7.18 54.76 7.09 C54.73 7.01 54.7 6.94 54.69 6.88 L54.66 6.8 L54.65 6.8 L54.62 6.88 C54.6 6.94 54.57 7 54.55 7.08 C54.52 7.17 54.49 7.26 54.45 7.36 C54.42 7.46 54.38 7.56 54.34 7.64 L53.51 9.66 Z M56.16 10.57 L53.14 10.57 L52.54 12.03 L51.44 12.03 L54.18 5.57 L55.13 5.57 L57.86 12.03 L56.76 12.03 Z" fill="currentColor"/>
+    <path d="M33.56 13.05 L33.56 14.81 L31.17 14.81 L31.17 20.93 L29.28 20.93 L29.28 14.81 L26.91 14.81 L26.91 13.05 Z" fill="currentColor"/>
+    <path d="M48.15 15.49 L48.08 15.57 C47.9 15.34 47.67 15.16 47.36 15.03 C47.06 14.89 46.75 14.83 46.44 14.83 C46.11 14.83 45.82 14.88 45.56 15 C45.3 15.11 45.08 15.27 44.9 15.46 C44.72 15.65 44.58 15.88 44.48 16.15 C44.38 16.42 44.33 16.72 44.33 17.04 C44.33 17.38 44.39 17.69 44.49 17.96 C44.59 18.23 44.74 18.46 44.93 18.65 C45.12 18.84 45.35 18.99 45.61 19.09 C45.86 19.19 46.15 19.24 46.45 19.24 C46.83 19.24 47.19 19.15 47.52 18.98 C47.85 18.81 48.09 18.59 48.26 18.32 L50.18 18.81 C50.01 19.16 49.8 19.47 49.56 19.76 C49.31 20.04 49.03 20.29 48.71 20.49 C48.4 20.69 48.05 20.85 47.67 20.95 C47.28 21.06 46.89 21.12 46.47 21.12 C45.91 21.12 45.38 21.02 44.89 20.83 C44.39 20.62 43.96 20.34 43.59 19.98 C43.22 19.62 42.93 19.18 42.71 18.68 C42.5 18.17 42.4 17.62 42.4 17.02 C42.4 16.42 42.51 15.87 42.72 15.37 C42.94 14.86 43.23 14.42 43.6 14.06 C43.97 13.7 44.41 13.42 44.91 13.22 C45.4 13.01 45.93 12.91 46.49 12.91 C46.89 12.91 47.26 12.96 47.62 13.06 C47.98 13.16 48.31 13.3 48.61 13.48 C48.91 13.66 49.2 13.87 49.44 14.13 C49.69 14.39 49.91 14.67 50.07 14.98 Z" fill="currentColor"/>
+    <path d="M57.86 13.05 L57.86 20.93 L55.97 20.93 L55.97 17.86 L53.02 17.86 L53.02 20.93 L51.13 20.93 L51.13 13.05 L53.02 13.05 L53.02 16.1 L55.97 16.1 L55.97 13.05 Z" fill="currentColor"/>
+    <path d="M41.01 13.77 C40.53 14.03 40.13 14.43 39.79 14.87 L39.79 14.87 C39.07 15.79 38.58 16.88 37.89 17.82 L37.89 17.82 C37.2 18.76 36.22 19.59 35.06 19.67 L35.06 19.67 C34.31 19.72 33.53 19.43 32.98 18.9 L32.98 18.9 C33.02 18.93 33.03 19.06 33.05 19.11 L33.05 19.11 C33.08 19.18 33.12 19.25 33.15 19.32 L33.15 19.32 C33.23 19.45 33.31 19.59 33.41 19.7 L33.41 19.7 C33.6 19.92 33.88 20.1 34.13 20.23 L34.13 20.23 C34.67 20.51 35.27 20.64 35.86 20.57 L35.86 20.57 C36.88 20.46 37.76 19.83 38.46 19.07 L38.46 19.07 C39.22 18.25 39.79 17.28 40.38 16.32 L40.38 16.32 C40.7 15.8 41.02 15.28 41.37 14.79 L41.37 14.79 C41.72 14.32 42.11 13.86 42.62 13.59 L42.62 13.59 C42.44 13.53 42.24 13.5 42.05 13.5 L42.05 13.5 C41.69 13.5 41.33 13.6 41.01 13.77" fill="url(#logo-g3)"/>
+    <path d="M40.02 17.38 C39.74 17.79 39.47 18.2 39.19 18.6 L39.19 18.6 C39.15 18.67 39.15 18.72 39.18 18.78 L39.18 18.78 C39.31 19.03 39.43 19.28 39.58 19.5 L39.58 19.5 C39.79 19.83 40.08 20.08 40.45 20.21 L40.45 20.21 C40.88 20.37 41.32 20.32 41.75 20.2 L41.75 20.2 C41.78 20.19 41.8 20.17 41.82 20.16 L41.82 20.16 C41.68 20.04 41.54 19.94 41.43 19.82 L41.43 19.82 C41.29 19.65 41.15 19.46 41.04 19.28 L41.04 19.28 C40.67 18.68 40.41 18.04 40.18 17.38 L40.18 17.38 C40.17 17.34 40.15 17.3 40.12 17.24 L40.12 17.24 C40.08 17.3 40.05 17.34 40.02 17.38" fill="url(#logo-g4)"/>
+    <path d="M37.55 17.45 C37.53 17.49 37.51 17.54 37.49 17.59 S38.74 15.89 39.3 15.06 C39.62 14.58 39.95 14.12 40.39 13.76 C40.88 13.36 41.42 13.13 42.06 13.14 C42.11 13.14 42.17 13.14 42.23 13.14 C41.72 13.02 41.22 12.99 40.74 13.21 C40.15 13.47 39.7 13.89 39.32 14.41 C39.13 14.67 38.95 14.96 38.77 15.24 C38.33 15.96 37.92 16.69 37.55 17.45" fill="currentColor"/>
+    <path d="M36.03 13.58 C35 13.96 34.12 14.7 33.51 15.62 L33.51 15.62 C33.22 16.06 32.98 16.55 32.9 17.08 L32.9 17.08 C32.83 17.6 32.93 18.08 33.19 18.47 L33.19 18.47 C33.34 18.69 33.54 18.88 33.8 19.04 L33.8 19.04 C34.14 19.24 34.52 19.37 34.91 19.38 L34.91 19.38 C34.91 19.38 34.92 19.38 34.92 19.38 L34.92 19.38 C34.94 19.38 34.95 19.38 34.96 19.38 L34.96 19.38 C34.67 19.2 34.48 18.87 34.41 18.54 L34.41 18.54 C34.34 18.2 34.37 17.84 34.43 17.51 L34.43 17.51 C34.6 16.6 35.03 15.73 35.7 15.11 L35.7 15.11 C35.98 14.85 36.31 14.62 36.68 14.53 L36.68 14.53 C36.87 14.48 37.06 14.46 37.24 14.52 L37.24 14.52 C37.49 14.59 37.69 14.79 37.82 15.02 L37.82 15.02 C37.95 15.23 38.02 15.48 38.09 15.72 L38.09 15.72 C38.19 15.56 38.28 15.4 38.38 15.25 L38.38 15.25 C38.56 14.96 38.73 14.67 38.93 14.41 L38.93 14.41 C38.94 14.39 38.95 14.37 38.97 14.36 L38.97 14.36 C38.97 14.35 38.97 14.34 38.97 14.33 L38.97 14.33 C38.97 14.3 38.95 14.26 38.93 14.23 L38.93 14.23 C38.65 13.77 38.13 13.47 37.6 13.39 L37.6 13.39 C37.47 13.36 37.33 13.35 37.2 13.35 L37.2 13.35 C36.8 13.35 36.4 13.44 36.03 13.58" fill="url(#logo-g5)"/>
+    </symbol>
+    <symbol id="globe" viewBox="0 0 6.57 6.58">
+    <linearGradient id="globe-g0" gradientUnits="userSpaceOnUse" x1="-0.00" y1="3.29" x2="6.58" y2="3.29"><stop offset="0" stop-color="#c1272d"/><stop offset="0.25" stop-color="#c9262c"/><stop offset="0.5" stop-color="#d2262b"/><stop offset="0.75" stop-color="#df2429"/><stop offset="1" stop-color="#ed2327"/></linearGradient>
+    <path d="M0 3.29 C0 5.11 1.47 6.58 3.29 6.58 L3.29 6.58 C5.1 6.58 6.57 5.11 6.57 3.29 L6.57 3.29 C6.57 1.47 5.1 0 3.29 0 L3.29 0 C1.47 0 0 1.47 0 3.29" fill="url(#globe-g0)"/>
+    <path d="M1.85 4.55 C2.12 4.85 2.44 5.04 2.81 5.14 C2.6 4.9 2.43 4.63 2.3 4.32 C2.15 4.4 2 4.47 1.85 4.55 M4.27 4.33 C4.15 4.63 3.98 4.9 3.76 5.14 C4.14 5.04 4.45 4.85 4.72 4.56 C4.57 4.47 4.43 4.39 4.27 4.33 M3.74 1.43 C3.96 1.68 4.13 1.95 4.26 2.25 C4.42 2.19 4.57 2.12 4.72 2.02 C4.45 1.72 4.12 1.53 3.74 1.43 M2.31 2.25 C2.44 1.95 2.62 1.68 2.84 1.43 C2.45 1.53 2.13 1.72 1.86 2.02 C2 2.11 2.15 2.19 2.31 2.25 M3.38 2.44 C3.55 2.44 3.98 2.37 4.08 2.32 C3.99 2.03 3.51 1.39 3.38 1.38 Z M3.19 1.38 C3.19 1.38 3.18 1.38 3.18 1.38 C2.88 1.63 2.65 1.95 2.49 2.31 C2.6 2.37 3.09 2.46 3.19 2.43 Z M4.1 4.27 C3.86 4.19 3.62 4.15 3.38 4.14 L3.38 5.21 C3.41 5.19 3.44 5.19 3.45 5.17 C3.65 4.99 3.82 4.79 3.95 4.56 C4 4.46 4.04 4.37 4.1 4.27 M3.19 4.14 C2.95 4.15 2.71 4.19 2.48 4.26 C2.63 4.62 2.85 4.93 3.13 5.18 C3.15 5.19 3.17 5.2 3.19 5.2 Z M4.28 3.19 C4.27 2.95 4.23 2.72 4.15 2.5 C3.9 2.58 3.64 2.62 3.38 2.63 L3.38 3.19 Z M2.3 3.19 L3.19 3.19 L3.19 2.63 C2.93 2.62 2.67 2.58 2.42 2.5 C2.36 2.64 2.29 3.04 2.3 3.19 M4.16 4.09 C4.23 3.86 4.27 3.62 4.28 3.39 L3.38 3.39 L3.38 3.95 C3.65 3.96 3.9 4 4.16 4.09 M2.29 3.39 C2.3 3.63 2.34 3.86 2.42 4.09 C2.67 4 2.93 3.96 3.19 3.95 L3.19 3.39 Z M4.48 3.39 C4.46 3.52 4.45 3.65 4.43 3.77 C4.41 3.9 4.37 4.02 4.34 4.14 C4.51 4.23 4.67 4.31 4.84 4.4 C5.06 4.1 5.17 3.76 5.2 3.39 Z M2.23 4.14 C2.16 3.9 2.11 3.65 2.1 3.39 L1.38 3.39 C1.4 3.76 1.52 4.1 1.73 4.4 C1.9 4.31 2.07 4.23 2.23 4.14 M5.2 3.19 C5.17 2.82 5.06 2.48 4.84 2.18 C4.67 2.27 4.5 2.35 4.33 2.44 C4.41 2.68 4.46 2.93 4.47 3.19 Z M2.1 3.19 C2.11 2.93 2.16 2.68 2.24 2.44 C2.07 2.35 1.9 2.27 1.73 2.18 C1.52 2.48 1.4 2.82 1.38 3.19 Z M3.29 5.48 C2.08 5.47 1.12 4.51 1.1 3.32 C1.08 2.09 2.08 1.09 3.31 1.1 C4.5 1.12 5.47 2.08 5.47 3.28 C5.48 4.49 4.5 5.47 3.29 5.48" fill="#ffffff"/>
+    </symbol>
+    <symbol id="phone" viewBox="0 0 6.57 6.58">
+    <linearGradient id="phone-g0" gradientUnits="userSpaceOnUse" x1="-0.00" y1="3.29" x2="6.57" y2="3.29"><stop offset="0" stop-color="#c1272d"/><stop offset="0.25" stop-color="#c9262c"/><stop offset="0.5" stop-color="#d2262b"/><stop offset="0.75" stop-color="#df2429"/><stop offset="1" stop-color="#ed2327"/></linearGradient>
+    <path d="M0 3.29 C0 5.11 1.47 6.58 3.29 6.58 L3.29 6.58 C5.1 6.58 6.57 5.11 6.57 3.29 L6.57 3.29 C6.57 1.47 5.1 0 3.29 0 L3.29 0 C1.47 0 0 1.47 0 3.29" fill="url(#phone-g0)"/>
+    <path d="M4.34 5.02 C4.14 5.02 3.98 4.96 3.81 4.88 C3.52 4.75 3.26 4.57 3.01 4.36 C2.65 4.07 2.33 3.73 2.05 3.36 C1.87 3.12 1.71 2.86 1.61 2.56 C1.57 2.46 1.55 2.36 1.55 2.26 C1.54 2.16 1.57 2.07 1.65 2 C1.77 1.88 1.88 1.76 2 1.65 C2.12 1.53 2.27 1.53 2.38 1.64 C2.53 1.79 2.68 1.94 2.83 2.09 C2.93 2.19 2.93 2.34 2.83 2.45 C2.73 2.54 2.64 2.63 2.54 2.73 C2.49 2.78 2.49 2.81 2.54 2.87 C2.87 3.29 3.25 3.66 3.67 4 C3.69 4.02 3.71 4.04 3.73 4.05 C3.78 4.09 3.81 4.09 3.85 4.04 C3.94 3.95 4.03 3.86 4.12 3.77 C4.16 3.73 4.21 3.69 4.28 3.68 C4.36 3.67 4.43 3.7 4.49 3.75 C4.64 3.91 4.79 4.06 4.95 4.21 C5.05 4.31 5.05 4.46 4.96 4.56 C4.83 4.69 4.7 4.82 4.57 4.95 C4.5 5.02 4.42 5.03 4.34 5.02" fill="#ffffff"/>
+    </symbol>
+    <symbol id="watermark" viewBox="0 0 153 243" overflow="visible">
+    <linearGradient id="wm-g0" gradientUnits="userSpaceOnUse" x1="33.65" y1="126.51" x2="84.99" y2="75.65"><stop offset="0" stop-color="#c1272d"/><stop offset="0.25" stop-color="#c9262c"/><stop offset="0.5" stop-color="#d2262b"/><stop offset="0.75" stop-color="#df2429"/><stop offset="1" stop-color="#ed2327"/></linearGradient><linearGradient id="wm-g1" gradientUnits="userSpaceOnUse" x1="124.51" y1="102.47" x2="172.33" y2="148.09"><stop offset="0" stop-color="#c1272d"/><stop offset="0.25" stop-color="#c9262c"/><stop offset="0.5" stop-color="#d2262b"/><stop offset="0.75" stop-color="#df2429"/><stop offset="1" stop-color="#ed2327"/></linearGradient><clipPath id="wm-c2-0"><path d="M-27.71 158.18 L188.84 158.18 L188.84 -9.5 L-27.71 -9.5 Z"/></clipPath><linearGradient id="wm-g2" gradientUnits="userSpaceOnUse" x1="40.42" y1="111.99" x2="38.44" y2="10.66"><stop offset="0" stop-color="#c1272d"/><stop offset="0.25" stop-color="#c9262c"/><stop offset="0.5" stop-color="#d2262b"/><stop offset="0.75" stop-color="#df2429"/><stop offset="1" stop-color="#ed2327"/></linearGradient>
+    <path d="M153.12 6.56 C142.26 12.3 133.44 21.32 125.89 31.07 L125.89 31.07 C109.98 51.59 99.03 75.69 83.67 96.63 L83.67 96.63 C68.3 117.58 46.6 136.02 20.74 137.75 L20.74 137.75 C4.01 138.87 -13.21 132.49 -25.48 120.62 L-25.48 120.62 C-24.72 121.36 -24.32 124.15 -23.89 125.21 L-23.89 125.21 C-23.23 126.86 -22.47 128.47 -21.62 130.04 L-21.62 130.04 C-20.04 132.94 -18.13 136 -15.98 138.5 L-15.98 138.5 C-11.74 143.41 -5.48 147.31 0.16 150.27 L0.16 150.27 C9.83 155.35 20.66 158.13 31.46 158.18 L31.46 158.18 L32.02 158.18 C34.22 158.17 36.41 158.05 38.59 157.81 L38.59 157.81 C61.19 155.33 80.89 141.24 96.3 124.5 L96.3 124.5 C113.17 106.18 125.93 84.59 139 63.2 L139 63.2 C146.05 51.67 153.18 40.19 161.09 29.31 L161.09 29.31 C168.72 18.81 177.39 8.62 188.84 2.65 L188.84 2.65 C184.72 1.24 180.44 0.59 176.15 0.59 L176.15 0.59 C168.18 0.59 160.17 2.82 153.12 6.56" fill="url(#wm-g0)"/>
+    <path d="M131.02 86.75 C124.9 95.86 118.83 105 112.64 114.06 L112.64 114.06 C111.67 115.46 111.57 116.62 112.36 118.06 L112.36 118.06 C115.29 123.39 117.86 128.97 121.21 134.02 L121.21 134.02 C125.97 141.2 132.25 146.82 140.46 149.76 L140.46 149.76 C150.22 153.26 159.9 152.3 169.49 149.47 L169.49 149.47 C170.07 149.3 170.57 148.86 170.95 148.64 L170.95 148.64 C167.99 146.04 164.84 143.82 162.39 140.97 L162.39 140.97 C159.17 137.24 156.25 133.17 153.64 128.97 L153.64 128.97 C145.45 115.75 139.62 101.43 134.54 86.79 L134.54 86.79 C134.23 85.89 133.81 85.03 133.22 83.63 L133.22 83.63 C132.26 85 131.62 85.86 131.02 86.75" fill="url(#wm-g1)"/>
+    <g clip-path="url(#wm-c2-0)"><path d="M76.16 88.28 C75.66 89.34 75.3 90.47 74.87 91.57 S102.47 53.68 115.05 35.16 C122.18 24.65 129.5 14.45 139.31 6.31 C150.05 -2.6 162.18 -7.63 176.31 -7.48 C177.57 -7.46 178.82 -7.47 180.08 -7.48 C168.77 -10.14 157.73 -10.69 147.04 -5.92 C134 -0.11 123.87 9.28 115.5 20.69 C111.12 26.66 107.23 33.03 103.31 39.35 C93.48 55.19 84.21 71.38 76.16 88.28" fill="#221f20"/></g>
+    <path d="M42.31 2.35 C19.43 10.77 -0.13 27.24 -13.73 47.66 L-13.73 47.66 C-20.25 57.47 -25.54 68.4 -27.2 80.2 L-27.2 80.2 C-28.8 91.61 -26.61 102.34 -20.78 111.04 L-20.78 111.04 C-17.46 116 -12.96 120.3 -7.3 123.69 L-7.3 123.69 C0.2 128.2 8.63 131.05 17.31 131.37 L17.31 131.37 C17.41 131.38 17.55 131.37 17.71 131.35 L17.71 131.35 C18.03 131.33 18.4 131.3 18.56 131.4 L18.56 131.4 C12.08 127.31 7.92 120.05 6.28 112.51 L6.28 112.51 C4.64 104.98 5.29 97.15 6.69 89.62 L6.69 89.62 C10.47 69.39 19.99 50.15 34.86 36.33 L34.86 36.33 C41.17 30.47 48.54 25.54 56.88 23.4 L56.88 23.4 C60.92 22.36 65.26 22.01 69.3 23.22 L69.3 23.22 C74.78 24.87 79.19 29.27 82.11 34.28 L82.11 34.28 C84.95 39.14 86.57 44.6 88.13 50.01 L88.13 50.01 C90.26 46.44 92.41 42.88 94.61 39.35 L94.61 39.35 C98.53 33.03 102.41 26.66 106.79 20.69 L106.79 20.69 C107.06 20.33 107.34 19.99 107.61 19.63 L107.61 19.63 C107.65 19.45 107.73 19.29 107.73 19.1 L107.73 19.1 C107.76 18.28 107.33 17.5 106.89 16.79 L106.89 16.79 C100.51 6.47 89.07 -0.02 77.29 -1.98 L77.29 -1.98 C74.31 -2.47 71.31 -2.7 68.31 -2.7 L68.31 -2.7 C59.46 -2.7 50.62 -0.71 42.31 2.35" fill="url(#wm-g2)"/>
+    </symbol>
+  </svg>
 
-<template id="tpl">
-  <div class="slot">
-    <div class="card front">
-      <img class="bg" src="assets/front.png" alt="" />
-      <div class="photo-ring" data-photo></div>
-      <div class="abs emp-id">ID: <span data-f="id"></span></div>
-      <div class="abs emp-name" data-f="name"></div>
-      <div class="abs emp-desig" data-f="designation"></div>
-    </div>
+  <div class="toolbar">
+    <button id="printOne">Print this card</button>
+    <button id="printAll" class="ghost" hidden>Print all cards</button>
+    <a href="/">Back to list</a>
   </div>
-  <div class="slot">
-    <div class="card back">
-      <img class="bg" src="assets/back.png" alt="" />
-      <div class="abs lbl addr-lbl">Residential Address:</div>
-      <div class="abs val addr" data-f="address"></div>
-      <div class="abs lbl cnic-lbl">CNIC No:</div>
-      <div class="abs val cnic" data-f="cnic"></div>
-      <div class="abs sign">Humaira</div>
-      <div class="abs auth">AUTHORIZED SIGNATORY</div>
-      <div class="abs ret1">IF FOUND PLEASE RETURN TO THE ADDRESS</div>
-      <div class="abs ret2">40-C, STREET 1, KHALID COMMERCIAL,</div>
-      <div class="abs ret3">PHASE 7 EXT, DHA, KARACHI</div>
-      <div class="abs web">www.alphatach.com</div>
-      <div class="abs phone">+92 324 3179505</div>
+
+  <div id="stage"></div>
+
+  <div class="nav" id="nav" hidden>
+    <button id="prev" aria-label="Previous">&#8249;</button>
+    <div class="info">
+      <b id="navName"></b>
+      <span id="navPos"></span><br>
+      <select id="jump" aria-label="Jump to employee"></select>
     </div>
+    <button id="next" aria-label="Next">&#8250;</button>
   </div>
-</template>
+
+  <template id="tpl">
+  <!-- ================= FRONT ================= -->
+  <article class="card card--front">
+    <svg class="layer watermark" viewBox="0 0 153 243" aria-hidden="true"><use href="#watermark"/></svg>
+
+    <div class="abs ribbon"></div>
+    <div class="abs photo" data-photo></div>
+    <p class="line emp-id">ID: <span data-f="id"></span></p>
+
+    <h1 class="line name" data-f="name"></h1>
+    <div class="abs name-rule"></div>
+    <p class="line designation" data-f="designation"></p>
+
+    <svg class="logo" aria-label="Alpha Tach"><use href="#logo"/></svg>
+  </article>
+
+  <!-- ================= BACK ================= -->
+  <article class="card card--back">
+    <svg class="layer watermark" viewBox="173 0 153 243" aria-hidden="true"><use href="#watermark"/></svg>
+
+    <svg class="logo" aria-label="Alpha Tach"><use href="#logo"/></svg>
+
+    <h2 class="line label address-label">Residential Address:</h2>
+    <p class="line value address" data-f="address"></p>
+
+    <h2 class="line label cnic-label">CNIC No:</h2>
+    <p class="line value cnic" data-f="cnic"></p>
+
+    <svg class="layer" viewBox="0 0 153 243" aria-label="Signature: Humaira">
+      <text class="signature" x="44.06" y="152.08" transform="rotate(-13.29 44.06 152.08)">Humaira</text>
+    </svg>
+    <div class="abs sign-rule"></div>
+    <p class="line sign-caption">AUTHORIZED SIGNATORY</p>
+
+    <p class="line return-note">IF FOUND PLEASE RETURN TO THE ADDRESS</p>
+    <p class="line return-address">40-C, STREET 1, KHALID COMMERCIAL,<br>PHASE 7 EXT, DHA, KARACHI</p>
+
+    <svg class="icon icon--web" aria-hidden="true"><use href="#globe"/></svg>
+    <span class="contact contact--web">www.alphatach.com</span>
+
+    <svg class="icon icon--phone" aria-hidden="true"><use href="#phone"/></svg>
+    <span class="contact contact--phone">+92 324 3179505</span>
+  </article>
+  </template>
 
 <script>
 // "|" or a line break in Excel splits a value onto separate lines on the card
@@ -107,44 +359,111 @@ function fill(el, text) {
   });
 }
 
-// Shrink long names so they stay on one line inside the card
-function fitWidth(el) {
+// Shrink text until its widest line fits inside the card
+function fitWidth(el, max) {
   let size = parseFloat(getComputedStyle(el).fontSize);
-  while (el.scrollWidth > el.clientWidth && size > 10) {
+  const widest = () => {
+    const r = document.createRange();
+    r.selectNodeContents(el);
+    return r.getBoundingClientRect().width;
+  };
+  while (widest() > max && size > 8) {
     size -= 0.5;
     el.style.fontSize = size + 'px';
   }
 }
 
-(async () => {
-  const id = new URLSearchParams(location.search).get('id');
-  const res = await fetch('/api/employees/' + encodeURIComponent(id || ''));
-  const sheet = document.getElementById('sheet');
-  if (!res.ok) {
-    sheet.innerHTML = '<div class="error">Employee nahi mila</div>';
-    return;
-  }
-  const emp = await res.json();
-  document.title = `${emp.name} - Employee Card`;
-  sheet.appendChild(document.getElementById('tpl').content.cloneNode(true));
+function render(emp) {
+  const pair = document.createElement('div');
+  pair.className = 'pair';
+  pair.appendChild(document.getElementById('tpl').content.cloneNode(true));
 
-  sheet.querySelector('[data-f=id]').textContent = emp.id;
-  fill(sheet.querySelector('[data-f=name]'), emp.name);
-  fill(sheet.querySelector('[data-f=designation]'), emp.designation);
-  fill(sheet.querySelector('[data-f=address]'), emp.address);
-  sheet.querySelector('[data-f=cnic]').textContent = emp.cnic;
+  pair.querySelector('[data-f=id]').textContent = emp.id;
+  fill(pair.querySelector('[data-f=name]'), emp.name);
+  fill(pair.querySelector('[data-f=designation]'), emp.designation);
+  fill(pair.querySelector('[data-f=address]'), emp.address);
+  pair.querySelector('[data-f=cnic]').textContent = emp.cnic;
 
-  const ring = sheet.querySelector('[data-photo]');
+  const photo = pair.querySelector('[data-photo]');
   if (emp.photo) {
     const img = document.createElement('img');
+    img.className = 'fit';
     img.src = '/' + emp.photo;
-    ring.appendChild(img);
+    img.alt = emp.name;
+    photo.appendChild(img);
   } else {
-    ring.innerHTML = `<div class="placeholder">${emp.name.split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase()}</div>`;
+    photo.innerHTML = '<div class="initials">' + emp.name.split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase() + '</div>';
+  }
+  return pair;
+}
+
+const $ = (s) => document.getElementById(s);
+const stage = $('stage');
+let list = [];
+let index = 0;
+
+// Fitting needs the cards in the DOM and fonts loaded
+async function show(emps) {
+  stage.textContent = '';
+  emps.forEach((emp) => stage.appendChild(render(emp)));
+  await document.fonts.ready;
+  stage.querySelectorAll('.name, .designation, .address').forEach((el) => fitWidth(el, 286));
+}
+
+function go(i) {
+  index = (i + list.length) % list.length;
+  const emp = list[index];
+  document.title = emp.name + ' - Employee Card';
+  $('navName').textContent = emp.name;
+  $('navPos').textContent = `${index + 1} / ${list.length}  ·  ID ${emp.id}`;
+  $('jump').value = String(index);
+  $('prev').disabled = $('next').disabled = list.length < 2;
+  history.replaceState(null, '', '?id=' + encodeURIComponent(emp.id) + (list.length > 1 ? '&all=1' : ''));
+  return show([emp]);
+}
+
+(async () => {
+  const params = new URLSearchParams(location.search);
+  const id = params.get('id');
+
+  // ?id=X alone shows one card; no id (or &all=1) gives the carousel over everyone
+  if (id && !params.has('all')) {
+    const res = await fetch('/api/employees/' + encodeURIComponent(id));
+    if (res.ok) list = [await res.json()];
+  } else {
+    list = await (await fetch('/api/employees')).json();
+    index = Math.max(0, list.findIndex((e) => e.id === id));
   }
 
-  await document.fonts.ready;
-  fitWidth(sheet.querySelector('.emp-name'));
+  if (!list.length) {
+    stage.innerHTML = '<p class="error">' + (id ? 'Employee nahi mila' : 'Abhi koi employee nahi') + '</p>';
+    $('printOne').hidden = true;
+    return;
+  }
+
+  if (list.length > 1) {
+    $('nav').hidden = false;
+    $('printAll').hidden = false;
+    $('jump').innerHTML = list.map((e, i) => `<option value="${i}">${e.id} - ${e.name.replace(/</g, '&lt;')}</option>`).join('');
+  }
+  await go(index);
+
+  $('prev').onclick = () => go(index - 1);
+  $('next').onclick = () => go(index + 1);
+  $('jump').onchange = (ev) => go(Number(ev.target.value));
+  document.addEventListener('keydown', (ev) => {
+    if (list.length < 2 || ev.target.tagName === 'SELECT') return;
+    if (ev.key === 'ArrowLeft') go(index - 1);
+    if (ev.key === 'ArrowRight') go(index + 1);
+  });
+
+  $('printOne').onclick = () => window.print();
+  $('printAll').onclick = async () => {
+    await show(list);
+    await Promise.all([...stage.querySelectorAll('img')].map((img) => img.decode().catch(() => {})));
+    window.print();
+    go(index);
+  };
 })();
 </script>
 </body>

@@ -224,20 +224,51 @@
     .toolbar button.ghost { background: #fff; color: var(--red); border: 1px solid var(--red); }
     #stage { flex-basis: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 40px; }
     .pair { display: contents; }
+    /* Carousel side filter: show only fronts or only backs */
+    #stage.side-front .card--back, #stage.side-back .card--front { display: none; }
+    .toolbar select { padding: 7px 10px; border-radius: 6px; border: 1px solid #bbb; font: 600 14px Arial, sans-serif; }
     .nav { flex-basis: 100%; display: flex; align-items: center; justify-content: center; gap: 16px; font-family: Arial, sans-serif; }
     .nav[hidden] { display: none; }
     .nav button { width: 46px; height: 46px; border-radius: 50%; border: 0; background: var(--red); color: #fff; font-size: 22px; cursor: pointer; }
     .nav button:disabled { background: #bbb; cursor: default; }
     .nav .info { min-width: 220px; text-align: center; font-size: 14px; color: #333; }
     .nav .info b { display: block; font-size: 16px; }
+    .nav .pickers { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-top: 6px; }
+    .empty-note { flex-basis: 100%; text-align: center; color: #666; font: 15px Arial, sans-serif; padding: 60px 0; }
     .nav select { margin-top: 6px; padding: 4px 6px; border-radius: 4px; border: 1px solid #bbb; max-width: 220px; }
 
+    /* ---------- Printing ----------
+       Cards are copied into #sheets right before printing. Each sheet is one
+       printer page; each .slot is one CR80 card (53.98 × 85.60 mm, portrait)
+       placed at the mm position set in Print settings. The 306 × 486 px design
+       is zoomed to 323.5 px tall = 85.6 mm at 96 px/in. */
+    #sheets { display: none; }
+    .tray { position: relative; }
+    .tray summary { list-style: none; cursor: pointer; background: #555; color: #fff; padding: 8px 16px; border-radius: 6px; font: 600 14px Arial, sans-serif; }
+    .tray[open] summary { background: #333; }
+    .tray .panel { position: absolute; z-index: 5; top: 44px; right: 0; width: 330px; background: #fff; border-radius: 8px; padding: 14px;
+                   box-shadow: 0 8px 24px rgba(0,0,0,.2); font: 13px Arial, sans-serif; color: #222; }
+    .tray .grid { display: grid; grid-template-columns: 1fr 70px 70px; gap: 6px 8px; align-items: center; margin: 10px 0; }
+    .tray .grid b { font-size: 12px; color: #666; text-align: center; }
+    .tray input { width: 70px; padding: 4px; border: 1px solid #bbb; border-radius: 4px; }
+    .tray select { width: 100%; margin-top: 4px; }
+    .tray .hint { color: #666; font-size: 12px; line-height: 1.4; margin: 6px 0 10px; }
+    .tray .btns { display: flex; gap: 8px; }
+    .tray .btns button { flex: 1; padding: 7px; font-size: 13px; }
+
     @media print {
-      @page { size: 306px 486px; margin: 0; }
-      body { display: block; padding: 0; background: #fff; min-height: 0; }
-      .toolbar, .nav { display: none !important; }
-      #stage { display: block; }
-      .card { box-shadow: none; break-after: page; page-break-after: always; }
+      html, body { margin: 0; padding: 0; background: #fff; }
+      body { display: block; min-height: 0; }
+      body > *:not(#sheets):not(svg) { display: none !important; }
+      #sheets { display: block; }
+      .sheet { position: relative; overflow: hidden; break-after: page; page-break-after: always; }
+      .sheet:last-child { break-after: auto; page-break-after: auto; }
+      .slot { position: absolute; width: 53.98mm; height: 85.6mm; overflow: hidden; }
+      .slot .card { zoom: 0.6657; box-shadow: none; display: block !important; }
+      .slot.test { outline: 0.3mm dashed #000; display: flex; align-items: center; justify-content: center; font: 12pt Arial, sans-serif; }
+      .slot.test::before, .slot.test::after { content: ""; position: absolute; background: #000; }
+      .slot.test::before { left: 50%; top: 0; bottom: 0; width: 0.2mm; }
+      .slot.test::after { top: 50%; left: 0; right: 0; height: 0.2mm; }
       * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     }
   </style>
@@ -286,18 +317,52 @@
 
   <div class="toolbar">
     <button id="printOne">Print this card</button>
+    <select id="side" aria-label="Card side" hidden>
+      <option value="front">Front</option>
+      <option value="back">Back</option>
+    </select>
     <button id="printAll" class="ghost" hidden>Print all cards</button>
+    <details class="tray" id="tray">
+      <summary>Print settings</summary>
+      <div class="panel">
+        <label>Mode
+          <select id="tMode">
+            <option value="tray">Card tray: 2 cards per sheet</option>
+            <option value="single">1 card per page (card size)</option>
+          </select>
+        </label>
+        <div id="trayFields">
+          <div class="grid">
+            <span></span><b>X (mm)</b><b>Y (mm)</b>
+            <span>Card 1 position</span><input id="tX1" type="number" step="0.5"><input id="tY1" type="number" step="0.5">
+            <span>Card 2 position</span><input id="tX2" type="number" step="0.5"><input id="tY2" type="number" step="0.5">
+            <span></span><b>Width</b><b>Height</b>
+            <span>Paper size (mm)</span><input id="tW" type="number" step="0.5"><input id="tH" type="number" step="0.5">
+          </div>
+          <p class="hint">X / Y = card ke upar-left kone ka faasla, paper ke upar-left kone se.
+            Pehle plain paper par <b>Test page</b> print karke tray par rakh kar dekhein ke boxes cards par aate hain, phir numbers adjust karein.</p>
+        </div>
+        <div class="btns">
+          <button type="button" id="tSave">Save</button>
+          <button type="button" id="tTest" class="ghost">Test page</button>
+        </div>
+      </div>
+    </details>
     <a href="/">Back to list</a>
   </div>
+  <div id="sheets"></div>
+  <style id="pageSize"></style>
 
   <div id="stage"></div>
 
   <div class="nav" id="nav" hidden>
     <button id="prev" aria-label="Previous">&#8249;</button>
     <div class="info">
-      <b id="navName"></b>
-      <span id="navPos"></span><br>
-      <select id="jump" aria-label="Jump to employee"></select>
+      <span id="navPos"></span>
+      <div class="pickers">
+        <select id="pickA" aria-label="First employee"></select>
+        <select id="pickB" aria-label="Second employee"></select>
+      </div>
     </div>
     <button id="next" aria-label="Next">&#8250;</button>
   </div>
@@ -398,9 +463,77 @@ function render(emp) {
 }
 
 const $ = (s) => document.getElementById(s);
+
+const CARD_W = 53.98;
+const CARD_H = 85.6;
+const TRAY_DEFAULTS = { mode: 'tray', w: 210, h: 297, x1: 20, y1: 20, x2: 90, y2: 20 };
+const TRAY_FIELDS = { w: 'tW', h: 'tH', x1: 'tX1', y1: 'tY1', x2: 'tX2', y2: 'tY2' };
+
+// Printer layout is a per-computer setting, so it lives in this browser's storage
+function loadTray() {
+  try {
+    return { ...TRAY_DEFAULTS, ...JSON.parse(localStorage.getItem('trayLayout') || '{}') };
+  } catch {
+    return { ...TRAY_DEFAULTS };
+  }
+}
+
+function readTrayForm() {
+  const t = { mode: $('tMode').value };
+  for (const [k, id] of Object.entries(TRAY_FIELDS)) t[k] = Number($(id).value) || 0;
+  return t;
+}
+
+function fillTrayForm(t) {
+  $('tMode').value = t.mode;
+  for (const [k, id] of Object.entries(TRAY_FIELDS)) $(id).value = t[k];
+  $('trayFields').hidden = t.mode !== 'tray';
+}
+
+// Page size and card slots (mm) for the chosen mode
+function layout(t) {
+  if (t.mode === 'single') return { w: CARD_W, h: CARD_H, slots: [[0, 0]] };
+  return { w: t.w, h: t.h, slots: [[t.x1, t.y1], [t.x2, t.y2]] };
+}
+
+// Copy the cards into printer pages, filling the slots of each sheet in order
+function printCards(cards, test = false) {
+  const { w, h, slots } = layout(readTrayForm());
+  $('pageSize').textContent = `@media print { @page { size: ${w}mm ${h}mm; margin: 0; } .sheet { width: ${w}mm; height: ${h}mm; } }`;
+  const sheets = $('sheets');
+  sheets.textContent = '';
+  const items = test ? slots.map((_, i) => i) : cards;
+  for (let i = 0; i < items.length; i += slots.length) {
+    const sheet = document.createElement('div');
+    sheet.className = 'sheet';
+    items.slice(i, i + slots.length).forEach((item, j) => {
+      const slot = document.createElement('div');
+      slot.className = 'slot' + (test ? ' test' : '');
+      slot.style.left = slots[j][0] + 'mm';
+      slot.style.top = slots[j][1] + 'mm';
+      if (test) slot.textContent = `Card ${j + 1}`;
+      else slot.appendChild(item.cloneNode(true));
+      sheet.appendChild(slot);
+    });
+    sheets.appendChild(sheet);
+  }
+  window.print();
+}
+
+const visibleCards = () => [...document.querySelectorAll('#stage .card')].filter((c) => getComputedStyle(c).display !== 'none');
+
+fillTrayForm(loadTray());
+$('tMode').onchange = () => { $('trayFields').hidden = $('tMode').value !== 'tray'; };
+$('tSave').onclick = () => {
+  try { localStorage.setItem('trayLayout', JSON.stringify(readTrayForm())); } catch {}
+  $('tray').open = false;
+};
+$('tTest').onclick = () => printCards([], true);
+window.addEventListener('afterprint', () => { $('sheets').textContent = ''; });
 const stage = $('stage');
+const PER_PAGE = 2;
 let list = [];
-let index = 0;
+let page = 0;
 
 // Fitting needs the cards in the DOM and fonts loaded
 async function show(emps) {
@@ -410,29 +543,54 @@ async function show(emps) {
   stage.querySelectorAll('.name, .designation, .address').forEach((el) => fitWidth(el, 286));
 }
 
-function go(i) {
-  index = (i + list.length) % list.length;
-  const emp = list[index];
-  document.title = emp.name + ' - Employee Card';
-  $('navName').textContent = emp.name;
-  $('navPos').textContent = `${index + 1} / ${list.length}  ·  ID ${emp.id}`;
-  $('jump').value = String(index);
-  $('prev').disabled = $('next').disabled = list.length < 2;
-  history.replaceState(null, '', '?id=' + encodeURIComponent(emp.id) + (list.length > 1 ? '&all=1' : ''));
-  return show([emp]);
+const pageCount = () => Math.ceil(list.length / PER_PAGE);
+const pickers = () => [$('pickA'), $('pickB')];
+
+// Show whoever is picked in the two dropdowns; an empty dropdown shows no card
+function showPicked() {
+  const emps = pickers().map((p) => list[p.value]).filter(Boolean);
+  const picked = pickers().map((p) => p.value);
+  if (picked[0] !== '') page = Math.floor(Number(picked[0]) / PER_PAGE);
+
+  document.title = (emps.map((e) => e.name).join(' & ') || 'Employee') + ' - Employee Card';
+  $('navPos').textContent = list.length > 1 ? `Page ${page + 1} / ${pageCount()}` : 'ID ' + list[0].id;
+  $('printOne').disabled = !emps.length;
+  if (list.length > 1) {
+    const ids = picked.map((v) => (v === '' ? '' : encodeURIComponent(list[v].id)));
+    history.replaceState(null, '', `?a=${ids[0]}&b=${ids[1]}&all=1&side=${$('side').value}`);
+  }
+  if (!emps.length) {
+    stage.innerHTML = '<p class="empty-note error">Neeche dropdown se employee select karein</p>';
+    return Promise.resolve();
+  }
+  return show(emps);
+}
+
+// Prev / next fill both dropdowns with the next pair
+function go(p) {
+  page = (p + pageCount()) % pageCount();
+  pickers().forEach((sel, i) => {
+    const idx = page * PER_PAGE + i;
+    sel.value = idx < list.length ? String(idx) : '';
+  });
+  return showPicked();
+}
+
+function setSide(side) {
+  stage.classList.toggle('side-front', side === 'front');
+  stage.classList.toggle('side-back', side === 'back');
 }
 
 (async () => {
   const params = new URLSearchParams(location.search);
   const id = params.get('id');
 
-  // ?id=X alone shows one card; no id (or &all=1) gives the carousel over everyone
+  // ?id=X alone shows one employee (front + back); otherwise a carousel, 2 employees at a time
   if (id && !params.has('all')) {
     const res = await fetch('/api/employees/' + encodeURIComponent(id));
     if (res.ok) list = [await res.json()];
   } else {
     list = await (await fetch('/api/employees')).json();
-    index = Math.max(0, list.findIndex((e) => e.id === id));
   }
 
   if (!list.length) {
@@ -441,28 +599,51 @@ function go(i) {
     return;
   }
 
-  if (list.length > 1) {
-    $('nav').hidden = false;
-    $('printAll').hidden = false;
-    $('jump').innerHTML = list.map((e, i) => `<option value="${i}">${e.id} - ${e.name.replace(/</g, '&lt;')}</option>`).join('');
-  }
-  await go(index);
+  $('printOne').onclick = () => printCards(visibleCards());
 
-  $('prev').onclick = () => go(index - 1);
-  $('next').onclick = () => go(index + 1);
-  $('jump').onchange = (ev) => go(Number(ev.target.value));
+  if (list.length < 2) {
+    pickers().forEach((sel) => { sel.innerHTML = '<option value="0"></option>'; });
+    $('pickB').value = '';
+    return showPicked();
+  }
+
+  $('nav').hidden = false;
+  $('printAll').hidden = false;
+  $('side').hidden = false;
+  $('side').value = params.get('side') === 'back' ? 'back' : 'front';
+  setSide($('side').value);
+  $('printOne').textContent = 'Print these cards';
+
+  const options = '<option value="">-- Select employee --</option>' +
+    list.map((e, i) => `<option value="${i}">${e.id} - ${e.name.replace(/</g, '&lt;')}</option>`).join('');
+  pickers().forEach((sel) => { sel.innerHTML = options; });
+
+  // Restore picks from the URL (a / b), else start on the first pair
+  const find = (v) => list.findIndex((e) => e.id === v);
+  if (params.has('a') || params.has('b')) {
+    $('pickA').value = find(params.get('a')) >= 0 ? String(find(params.get('a'))) : '';
+    $('pickB').value = find(params.get('b')) >= 0 ? String(find(params.get('b'))) : '';
+    await showPicked();
+  } else {
+    await go(Math.floor(Math.max(0, find(id)) / PER_PAGE));
+  }
+
+  $('prev').onclick = () => go(page - 1);
+  $('next').onclick = () => go(page + 1);
+  pickers().forEach((sel) => { sel.onchange = showPicked; });
+  $('side').onchange = (ev) => { setSide(ev.target.value); showPicked(); };
   document.addEventListener('keydown', (ev) => {
-    if (list.length < 2 || ev.target.tagName === 'SELECT') return;
-    if (ev.key === 'ArrowLeft') go(index - 1);
-    if (ev.key === 'ArrowRight') go(index + 1);
+    if (ev.target.tagName === 'SELECT') return;
+    if (ev.key === 'ArrowLeft') go(page - 1);
+    if (ev.key === 'ArrowRight') go(page + 1);
   });
 
-  $('printOne').onclick = () => window.print();
+  // Prints every employee, only the side picked in the dropdown
   $('printAll').onclick = async () => {
     await show(list);
     await Promise.all([...stage.querySelectorAll('img')].map((img) => img.decode().catch(() => {})));
-    window.print();
-    go(index);
+    printCards(visibleCards());
+    showPicked();
   };
 })();
 </script>

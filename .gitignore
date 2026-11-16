@@ -1,3 +1,8 @@
 node_modules
-uploads/photos
-data
+
+# Employee data: database and uploaded photos stay on the server only
+data/
+uploads/
+
+# Local editor / tool settings
+.claude/

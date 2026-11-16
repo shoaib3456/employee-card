@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Login - Alpha Cards</title>
+<link rel="stylesheet" href="style.css" />
+<style>
+  body { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px; }
+  .login { width: 100%; max-width: 360px; background: #fff; border-radius: 10px; padding: 28px 26px; box-shadow: 0 4px 20px rgba(0,0,0,.08); border-top: 4px solid #d42a2f; }
+  .login h1 { margin: 0 0 4px; font-size: 22px; }
+  .login p { margin: 0 0 20px; color: #666; font-size: 14px; }
+  .login label { display: block; font-size: 13px; font-weight: 600; margin: 14px 0 6px; }
+  .login input { width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
+  .login input:focus { outline: 2px solid #d42a2f33; border-color: #d42a2f; }
+  .login .btn { width: 100%; margin-top: 20px; padding: 11px; font-size: 15px; }
+  .login .btn:disabled { opacity: .7; cursor: default; }
+</style>
+</head>
+<body>
+<form class="login" id="form">
+  <h1>Alpha Cards</h1>
+  <p>Sign in to continue</p>
+  <label for="username">Username</label>
+  <input id="username" name="username" autocomplete="username" required autofocus />
+  <label for="password">Password</label>
+  <input id="password" name="password" type="password" autocomplete="current-password" required />
+  <button class="btn" type="submit">Log in</button>
+  <div id="msg" class="msg error"></div>
+</form>
+
+<script>
+const form = document.getElementById('form');
+const msg = document.getElementById('msg');
+
+// Only follow same-site paths after login
+function nextUrl() {
+  const next = new URLSearchParams(location.search).get('next') || '/';
+  return next.startsWith('/') && !next.startsWith('//') ? next : '/';
+}
+
+form.addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const btn = form.querySelector('button');
+  btn.disabled = true;
+  msg.textContent = '';
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username: form.username.value.trim(), password: form.password.value }),
+    });
+    if (res.ok) {
+      location.replace(nextUrl());
+      return;
+    }
+    msg.textContent = (await res.json().catch(() => null))?.error || 'Login failed';
+    form.password.value = '';
+    form.password.focus();
+  } catch {
+    msg.textContent = 'Cannot reach the server';
+  }
+  btn.disabled = false;
+});
+</script>
+</body>
+</html>

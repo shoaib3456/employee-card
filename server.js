@@ -1,5 +1,6 @@
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const express = require('express');
 const multer = require('multer');
 const XLSX = require('xlsx');
@@ -12,6 +13,63 @@ const uploadsDir = path.join(__dirname, 'uploads', 'photos');
 fs.mkdirSync(uploadsDir, { recursive: true });
 
 app.use(express.json());
+
+// ---------- Login ----------
+// Single admin account; env vars can override the built-in credentials
+const ADMIN_USER = process.env.ADMIN_USER || 'admin';
+const ADMIN_PASS = process.env.ADMIN_PASS || 'alpha.123';
+const SESSION_COOKIE = 'ec_session';
+const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
+const sessions = new Map(); // token -> expiry time (cleared on server restart)
+
+const sameText = (a, b) => {
+  const x = crypto.createHash('sha256').update(String(a)).digest();
+  const y = crypto.createHash('sha256').update(String(b)).digest();
+  return crypto.timingSafeEqual(x, y);
+};
+
+function sessionToken(req) {
+  const m = (req.headers.cookie || '').match(new RegExp(`(?:^|;\\s*)${SESSION_COOKIE}=([a-f0-9]+)`));
+  return m ? m[1] : null;
+}
+
+function isLoggedIn(req) {
+  const token = sessionToken(req);
+  const expires = token && sessions.get(token);
+  if (!expires) return false;
+  if (expires < Date.now()) {
+    sessions.delete(token);
+    return false;
+  }
+  return true;
+}
+
+app.post('/api/login', (req, res) => {
+  const { username, password } = req.body || {};
+  // Check both so a wrong username takes as long as a wrong password
+  const ok = sameText(username, ADMIN_USER) & sameText(password, ADMIN_PASS);
+  if (!ok) return setTimeout(() => res.status(401).json({ error: 'Invalid username or password' }), 500);
+  const token = crypto.randomBytes(32).toString('hex');
+  sessions.set(token, Date.now() + SESSION_TTL_MS);
+  res.setHeader('Set-Cookie', `${SESSION_COOKIE}=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${SESSION_TTL_MS / 1000}`);
+  res.json({ ok: true });
+});
+
+app.post('/api/logout', (req, res) => {
+  sessions.delete(sessionToken(req));
+  res.setHeader('Set-Cookie', `${SESSION_COOKIE}=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0`);
+  res.json({ ok: true });
+});
+
+// Everything below needs a login, except the login page and its stylesheet
+const PUBLIC_PATHS = new Set(['/login.html', '/style.css']);
+app.use((req, res, next) => {
+  if (PUBLIC_PATHS.has(req.path) || isLoggedIn(req)) return next();
+  if (req.path.startsWith('/api/')) return res.status(401).json({ error: 'Please log in' });
+  const back = req.method === 'GET' ? '?next=' + encodeURIComponent(req.originalUrl) : '';
+  res.redirect('/login.html' + back);
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 

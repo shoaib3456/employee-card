@@ -12,6 +12,7 @@
   <div class="row">
     <a class="btn ghost" href="card.html?all=1&amp;export=zip" target="_blank">Download all cards (ZIP)</a>
     <a class="btn ghost" href="sample/employees-sample.xlsx" download>Sample Excel download</a>
+    <button class="btn danger" type="button" id="logout">Log out</button>
   </div>
 </header>
 
@@ -53,9 +54,17 @@ let photoTarget = null;
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 async function load() {
-  employees = await (await fetch('/api/employees')).json();
+  const res = await fetch('/api/employees');
+  // Session expired or server restarted: back to the login page
+  if (res.status === 401) return location.replace('/login.html');
+  employees = await res.json();
   render();
 }
+
+$('#logout').addEventListener('click', async () => {
+  await fetch('/api/logout', { method: 'POST' }).catch(() => {});
+  location.replace('/login.html');
+});
 
 function render() {
   const q = $('#search').value.trim().toLowerCase();

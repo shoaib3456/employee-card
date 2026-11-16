@@ -7,7 +7,7 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link crossorigin="anonymous" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
   <style>
     /*
@@ -225,7 +225,12 @@
     #stage { flex-basis: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 40px; }
     .pair { display: contents; }
     /* Carousel side filter: show only fronts or only backs */
-    #stage.side-front .card--back, #stage.side-back .card--front { display: none; }
+    #stage.side-front .box--back, #stage.side-back .box--front { display: none; }
+    .card-box { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .card-box .dl { border: 1px solid var(--red); background: #fff; color: var(--red); padding: 7px 14px; border-radius: 6px;
+                    font: 600 13px Arial, sans-serif; cursor: pointer; }
+    .card-box .dl:disabled { opacity: .6; cursor: default; }
+    #pngWork { position: fixed; left: -10000px; top: 0; }
     .toolbar select { padding: 7px 10px; border-radius: 6px; border: 1px solid #bbb; font: 600 14px Arial, sans-serif; }
     .nav { flex-basis: 100%; display: flex; align-items: center; justify-content: center; gap: 16px; font-family: Arial, sans-serif; }
     .nav[hidden] { display: none; }
@@ -272,6 +277,8 @@
       * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     }
   </style>
+<script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 </head>
 <body>
 
@@ -327,24 +334,26 @@
       <div class="panel">
         <label>Mode
           <select id="tMode">
-            <option value="tray">Card tray: 2 cards per sheet</option>
-            <option value="single">1 card per page (card size)</option>
+            <option value="tray">Card tray: 2 cards per A4 sheet</option>
+            <option value="single">1 card per page (53.98 × 85.60 mm)</option>
           </select>
         </label>
         <div id="trayFields">
           <div class="grid">
             <span></span><b>X (mm)</b><b>Y (mm)</b>
-            <span>Card 1 position</span><input id="tX1" type="number" step="0.5"><input id="tY1" type="number" step="0.5">
-            <span>Card 2 position</span><input id="tX2" type="number" step="0.5"><input id="tY2" type="number" step="0.5">
+            <span>Slot 1 (right)</span><input id="tX1" type="number" step="0.5"><input id="tY1" type="number" step="0.5">
+            <span>Slot 2 (left)</span><input id="tX2" type="number" step="0.5"><input id="tY2" type="number" step="0.5">
             <span></span><b>Width</b><b>Height</b>
             <span>Paper size (mm)</span><input id="tW" type="number" step="0.5"><input id="tH" type="number" step="0.5">
           </div>
-          <p class="hint">X / Y = card ke upar-left kone ka faasla, paper ke upar-left kone se.
-            Pehle plain paper par <b>Test page</b> print karke tray par rakh kar dekhein ke boxes cards par aate hain, phir numbers adjust karein.</p>
+          <p class="hint">The employee in the first dropdown prints in Slot 1, the second in Slot 2.
+            X / Y = distance from the paper's top-left corner to the card's top-left corner. Settings are saved on the server and apply on every computer.
+            Print a <b>Test page</b> on plain paper first, check that the boxes land on the card slots, then adjust the numbers.</p>
         </div>
         <div class="btns">
           <button type="button" id="tSave">Save</button>
           <button type="button" id="tTest" class="ghost">Test page</button>
+          <button type="button" id="tReset" class="ghost">Default</button>
         </div>
       </div>
     </details>
@@ -443,6 +452,20 @@ function render(emp) {
   pair.className = 'pair';
   pair.appendChild(document.getElementById('tpl').content.cloneNode(true));
 
+  pair.querySelectorAll('.card').forEach((card) => {
+    const side = card.classList.contains('card--front') ? 'front' : 'back';
+    const box = document.createElement('div');
+    box.className = 'card-box box--' + side;
+    card.replaceWith(box);
+    box.appendChild(card);
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'dl';
+    btn.textContent = 'Download PNG';
+    btn.onclick = () => downloadPng(card, `${emp.id}-${emp.name}-${side}`, btn);
+    box.appendChild(btn);
+  });
+
   pair.querySelector('[data-f=id]').textContent = emp.id;
   fill(pair.querySelector('[data-f=name]'), emp.name);
   fill(pair.querySelector('[data-f=designation]'), emp.designation);
@@ -462,20 +485,125 @@ function render(emp) {
   return pair;
 }
 
+// PNG export: 300 DPI at CR80 size (53.98 x 85.60 mm = 638 x 1011 px)
+const PNG_W = 638;
+const PNG_H = 1011;
+
+// The card's <svg><use href="#logo"> point at symbols elsewhere in the page,
+// which a standalone image can't see, so copy the symbol content in place.
+function inlineSymbols(root) {
+  root.querySelectorAll('use').forEach((use) => {
+    const sym = document.getElementById((use.getAttribute('href') || '').slice(1));
+    if (!sym) return;
+    const svg = use.closest('svg');
+    if (!svg.getAttribute('viewBox') && sym.getAttribute('viewBox')) svg.setAttribute('viewBox', sym.getAttribute('viewBox'));
+    use.replaceWith(...[...sym.childNodes].map((n) => n.cloneNode(true)));
+  });
+}
+
+// Renders one card to a PNG data URL
+async function cardToPng(card) {
+  if (!window.htmlToImage) throw new Error('Image library failed to load (check the internet connection)');
+  const work = document.createElement('div');
+  work.id = 'pngWork';
+  const copy = card.cloneNode(true);
+  copy.style.boxShadow = 'none';
+  inlineSymbols(copy);
+  work.appendChild(copy);
+  document.body.appendChild(work);
+  try {
+    await document.fonts.ready;
+    return await htmlToImage.toPng(copy, { width: 306, height: 486, canvasWidth: PNG_W, canvasHeight: PNG_H, pixelRatio: 1, cacheBust: true });
+  } finally {
+    work.remove();
+  }
+}
+
+const safeName = (s) => String(s).replace(/[\\/:*?"<>|]+/g, '').trim();
+
+function saveFile(href, filename) {
+  const a = document.createElement('a');
+  a.href = href;
+  a.download = filename;
+  a.click();
+}
+
+async function downloadPng(card, name, btn) {
+  btn.disabled = true;
+  const label = btn.textContent;
+  btn.textContent = 'Generating…';
+  try {
+    saveFile(await cardToPng(card), safeName(name).replace(/\s+/g, '-') + '.png');
+  } catch (e) {
+    alert('Could not create PNG: ' + (e.message || e));
+  } finally {
+    btn.disabled = false;
+    btn.textContent = label;
+  }
+}
+
+// ?export=zip: every employee's front and back as PNGs in one ZIP,
+// one folder per employee named "Name (ID)"
+async function exportZip() {
+  // Keep the SVG symbols and card template in the page; just hide the UI
+  document.querySelector('.toolbar').hidden = true;
+  document.querySelector('.toolbar').style.display = 'none';
+  $('nav').hidden = true;
+  const status = document.createElement('p');
+  status.className = 'error';
+  document.body.insertBefore(status, stage);
+  stage.style.visibility = 'hidden';
+  try {
+    if (!window.JSZip) throw new Error('ZIP library failed to load (check the internet connection)');
+    const zip = new JSZip();
+    const used = new Set();
+    for (const [i, emp] of list.entries()) {
+      status.textContent = `Generating PNGs… ${i + 1} / ${list.length} (${emp.name})`;
+      await show([emp]);
+      let folder = safeName(`${emp.name} (${emp.id})`) || String(emp.id);
+      while (used.has(folder.toLowerCase())) folder += '_';
+      used.add(folder.toLowerCase());
+      for (const side of ['front', 'back']) {
+        const url = await cardToPng(stage.querySelector('.card--' + side));
+        zip.file(`${folder}/${side}.png`, url.split(',')[1], { base64: true });
+      }
+    }
+    status.textContent = 'Creating ZIP…';
+    const blob = await zip.generateAsync({ type: 'blob' });
+    const href = URL.createObjectURL(blob);
+    saveFile(href, `employee-cards-${new Date().toLocaleDateString('en-CA')}.zip`);
+    status.textContent = `Done: ZIP with ${list.length} employees downloaded. You can close this tab.`;
+  } catch (e) {
+    status.textContent = 'Could not create ZIP: ' + (e.message || e);
+  }
+  stage.textContent = '';
+}
+
 const $ = (s) => document.getElementById(s);
 
 const CARD_W = 53.98;
 const CARD_H = 85.6;
-const TRAY_DEFAULTS = { mode: 'tray', w: 210, h: 297, x1: 20, y1: 20, x2: 90, y2: 20 };
+// Epson L8050 Disc/ID Card Tray: the driver fixes the page at A4 and each card
+// slot is a portrait window on it (slot 1 ~ x 12-67, y 33-120 mm; slots ~74 mm
+// apart). The page lands rotated 180 degrees on the tray, so slot 1 (marked on the
+// right of the tray) is on the left of the page.
+const TRAY_DEFAULTS = { mode: 'tray', w: 210, h: 297, x1: 12.5, y1: 33.5, x2: 86.5, y2: 33.5 };
 const TRAY_FIELDS = { w: 'tW', h: 'tH', x1: 'tX1', y1: 'tY1', x2: 'tX2', y2: 'tY2' };
 
-// Printer layout is a per-computer setting, so it lives in this browser's storage
-function loadTray() {
-  try {
-    return { ...TRAY_DEFAULTS, ...JSON.parse(localStorage.getItem('trayLayout') || '{}') };
-  } catch {
-    return { ...TRAY_DEFAULTS };
-  }
+function saveTray(t) {
+  return fetch('/api/settings/tray', {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(t),
+  });
+}
+
+// Layout is stored on the server so every computer prints the same way
+async function loadTray() {
+  // Positions once kept in this browser were guesses; drop them
+  try { localStorage.removeItem('trayLayout'); } catch {}
+  const saved = await fetch('/api/settings/tray').then((r) => (r.ok ? r.json() : null)).catch(() => null);
+  return { ...TRAY_DEFAULTS, ...(saved || {}) };
 }
 
 function readTrayForm() {
@@ -511,7 +639,7 @@ function printCards(cards, test = false) {
       slot.className = 'slot' + (test ? ' test' : '');
       slot.style.left = slots[j][0] + 'mm';
       slot.style.top = slots[j][1] + 'mm';
-      if (test) slot.textContent = `Card ${j + 1}`;
+      if (test) slot.textContent = `Slot ${j + 1}`;
       else slot.appendChild(item.cloneNode(true));
       sheet.appendChild(slot);
     });
@@ -522,13 +650,19 @@ function printCards(cards, test = false) {
 
 const visibleCards = () => [...document.querySelectorAll('#stage .card')].filter((c) => getComputedStyle(c).display !== 'none');
 
-fillTrayForm(loadTray());
+fillTrayForm(TRAY_DEFAULTS);
+loadTray().then(fillTrayForm);
 $('tMode').onchange = () => { $('trayFields').hidden = $('tMode').value !== 'tray'; };
-$('tSave').onclick = () => {
-  try { localStorage.setItem('trayLayout', JSON.stringify(readTrayForm())); } catch {}
+$('tSave').onclick = async () => {
+  const res = await saveTray(readTrayForm()).catch(() => null);
+  if (!res?.ok) {
+    alert('Could not save settings: ' + ((await res?.json().catch(() => null))?.error || 'cannot reach the server'));
+    return;
+  }
   $('tray').open = false;
 };
 $('tTest').onclick = () => printCards([], true);
+$('tReset').onclick = () => fillTrayForm(TRAY_DEFAULTS);
 window.addEventListener('afterprint', () => { $('sheets').textContent = ''; });
 const stage = $('stage');
 const PER_PAGE = 2;
@@ -560,7 +694,7 @@ function showPicked() {
     history.replaceState(null, '', `?a=${ids[0]}&b=${ids[1]}&all=1&side=${$('side').value}`);
   }
   if (!emps.length) {
-    stage.innerHTML = '<p class="empty-note error">Neeche dropdown se employee select karein</p>';
+    stage.innerHTML = '<p class="empty-note error">Select an employee from the dropdowns below</p>';
     return Promise.resolve();
   }
   return show(emps);
@@ -594,12 +728,20 @@ function setSide(side) {
   }
 
   if (!list.length) {
-    stage.innerHTML = '<p class="error">' + (id ? 'Employee nahi mila' : 'Abhi koi employee nahi') + '</p>';
+    stage.innerHTML = '<p class="error">' + (id ? 'Employee not found' : 'No employees yet') + '</p>';
     $('printOne').hidden = true;
     return;
   }
 
+  if (params.get('export') === 'zip') return exportZip();
+
   $('printOne').onclick = () => printCards(visibleCards());
+
+  // The single-employee page (Preview card) is view / PNG download only
+  if (id && !params.has('all')) {
+    $('printOne').hidden = true;
+    $('tray').hidden = true;
+  }
 
   if (list.length < 2) {
     pickers().forEach((sel) => { sel.innerHTML = '<option value="0"></option>'; });

@@ -1,21 +1,21 @@
 # Employee Card
 
-Excel se employees import karo, har employee ki photo lagao, aur employee card (front + back) generate/print karo.
+Import employees from Excel, add a photo for each employee, and generate / print employee ID cards (front + back).
 
 ## Setup
-Node.js 22.5+ chahiye (database ke liye built-in `node:sqlite` use hota hai).
+Requires Node.js 22.5+ (the database uses the built-in `node:sqlite` module).
 
 ```
 npm install
 npm start
 ```
-Phir browser mein kholo: http://localhost:3000
+Then open http://localhost:3000 in the browser.
 
 ## Excel format
 Columns: `ID`, `Name`, `Designation`, `Residential Address`, `CNIC No`
-Sample: `employees-sample.xlsx` (app mein "Sample Excel download" button bhi hai).
-Designation / address ko 2 lines mein todne ke liye `|` lagao, e.g. `Associate Vice President | Software Development`.
+Sample: `employees-sample.xlsx` (the app also has a "Sample Excel download" button).
+Use `|` to split designation / address onto 2 lines, e.g. `Associate Vice President | Software Development`.
 
-## Data kahan save hota hai
+## Where data is stored
 - Database: `data/employees.db`
 - Photos: `uploads/photos/`

@@ -1,7 +1,7 @@
 {
   "name": "employee-card",
   "version": "1.0.0",
-  "description": "Excel se employees import karo, photo lagao, employee card generate karo",
+  "description": "Import employees from Excel, add photos and generate employee ID cards",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",

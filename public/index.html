@@ -10,7 +10,7 @@
 <header class="topbar">
   <h1>Alpha Cards</h1>
   <div class="row">
-    <a class="btn" href="card.html" target="_blank">All cards (carousel)</a>
+    <a class="btn ghost" href="card.html?all=1&amp;export=zip" target="_blank">Download all cards (ZIP)</a>
     <a class="btn ghost" href="sample/employees-sample.xlsx" download>Sample Excel download</a>
   </div>
 </header>
@@ -19,7 +19,7 @@
   <section class="panel">
     <h2>Excel import</h2>
     <p class="hint">Columns: <b>ID</b>, <b>Name</b>, <b>Designation</b>, <b>Residential Address</b>, <b>CNIC No</b>.
-      Designation / address mein 2 lines ke liye <code>|</code> lagayein. Same ID dobara import ho to data update ho jayega (photo safe rahegi).</p>
+      Use <code>|</code> to split designation / address onto 2 lines. Re-importing the same ID updates its data (the photo is kept).</p>
     <form id="importForm" class="row">
       <input type="file" name="file" accept=".xlsx,.xls,.csv" required />
       <button class="btn" type="submit">Import</button>
@@ -62,7 +62,7 @@ function render() {
   const list = employees.filter((e) => !q || [e.id, e.name, e.cnic, e.designation].join(' ').toLowerCase().includes(q));
   $('#count').textContent = employees.length;
   if (!list.length) {
-    $('#rows').innerHTML = `<tr><td colspan="7" class="empty">${employees.length ? 'Koi match nahi' : 'Abhi koi employee nahi — Excel import karein'}</td></tr>`;
+    $('#rows').innerHTML = `<tr><td colspan="7" class="empty">${employees.length ? 'No matches' : 'No employees yet — import an Excel file'}</td></tr>`;
     return;
   }
   $('#rows').innerHTML = list.map((e) => `
@@ -75,7 +75,7 @@ function render() {
       <td class="nowrap">${esc(e.cnic)}</td>
       <td class="actions">
         <button class="btn small ghost" data-photo="${esc(e.id)}">${e.photo ? 'Change image' : 'Import image'}</button>
-        <a class="btn small" href="card.html?id=${encodeURIComponent(e.id)}" target="_blank">Generate card</a>
+        <a class="btn small" href="card.html?id=${encodeURIComponent(e.id)}" target="_blank">Preview card</a>
         <button class="btn small danger" data-del="${esc(e.id)}">Delete</button>
       </td>
     </tr>`).join('');
@@ -94,8 +94,8 @@ $('#importForm').addEventListener('submit', async (ev) => {
     return;
   }
   msg.className = 'msg ok';
-  msg.textContent = `${data.imported} employees import ho gaye.` +
-    (data.skipped.length ? ` Rows skip hui (ID ya Name missing): ${data.skipped.join(', ')}` : '');
+  msg.textContent = `${data.imported} employees imported (${data.added} new, ${data.updated} updated).` +
+    (data.skipped.length ? ` Skipped rows (missing ID or Name): ${data.skipped.join(', ')}` : '');
   ev.target.reset();
   load();
 });
@@ -107,7 +107,7 @@ $('#rows').addEventListener('click', async (ev) => {
     photoTarget = photoBtn.dataset.photo;
     $('#photoInput').value = '';
     $('#photoInput').click();
-  } else if (delBtn && confirm(`Employee ${delBtn.dataset.del} delete karna hai?`)) {
+  } else if (delBtn && confirm(`Delete employee ${delBtn.dataset.del}?`)) {
     await fetch(`/api/employees/${encodeURIComponent(delBtn.dataset.del)}`, { method: 'DELETE' });
     load();
   }

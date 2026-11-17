@@ -108,9 +108,12 @@
       height: 318.63px;
     }
 
+    /* Same left / width as .ribbon so "ID: X" is centred in the red area */
     .emp-id {
-      left: 124.04px;
+      left: 106.04px;
       right: auto;
+      width: 93.92px;
+      padding-left: .057em; /* balance trailing letter-spacing */
       top: 238.33px;
       font-size: 15.48px;
       font-weight: 700;
@@ -159,7 +162,8 @@
     }
 
     .address-label { top: 102.16px; }
-    .address       { top: 127.38px; line-height: 1.2; }
+    /* Long addresses wrap onto the next line inside the card margins */
+    .address       { top: 127.38px; line-height: 1.2; white-space: normal; left: 20px; right: 20px; overflow-wrap: anywhere; }
     .cnic-label    { top: 192.4px; }
     .cnic          { top: 216.22px; }
 
@@ -447,6 +451,15 @@ function fitWidth(el, max) {
   }
 }
 
+// Shrink wrapping text until all its lines fit above the next label
+function fitHeight(el, max) {
+  let size = parseFloat(getComputedStyle(el).fontSize);
+  while (el.getBoundingClientRect().height > max && size > 9) {
+    size -= 0.5;
+    el.style.fontSize = size + 'px';
+  }
+}
+
 function render(emp) {
   const pair = document.createElement('div');
   pair.className = 'pair';
@@ -674,7 +687,10 @@ async function show(emps) {
   stage.textContent = '';
   emps.forEach((emp) => stage.appendChild(render(emp)));
   await document.fonts.ready;
-  stage.querySelectorAll('.name, .designation, .address').forEach((el) => fitWidth(el, 286));
+  stage.querySelectorAll('.name, .designation').forEach((el) => fitWidth(el, 286));
+  stage.querySelectorAll('.emp-id').forEach((el) => fitWidth(el, 86)); // stay inside the red ribbon
+  // Address wraps; it has room for ~3 lines before "CNIC No:" (top 192px)
+  stage.querySelectorAll('.address').forEach((el) => fitHeight(el, 60));
 }
 
 const pageCount = () => Math.ceil(list.length / PER_PAGE);

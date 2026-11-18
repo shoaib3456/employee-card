@@ -127,6 +127,16 @@
       font-weight: 800;
       letter-spacing: -.019em;
     }
+    /* Long names wrap onto 2 lines that sit just above the red rule and shrink
+       only as much as needed to fit under the ribbon (see layoutCard) */
+    .name.name--wrap {
+      top: auto;
+      bottom: 158px;
+      left: 12px;
+      right: 12px;
+      white-space: normal;
+      line-height: 1.05;
+    }
 
     .name-rule {
       left: 56.6px;
@@ -139,6 +149,9 @@
 
     .designation {
       top: 344.02px;
+      left: 12px;
+      right: 12px;
+      white-space: normal;
       font-size: 14px;
       font-weight: 600;
       line-height: 1.52;
@@ -423,7 +436,8 @@
     <svg class="icon icon--phone" aria-hidden="true"><use href="#phone"/></svg>
     <span class="contact contact--phone">+92 324 3179505</span>
   </article>
-  </template>
+
+  </template>
 
 <script>
 // "|" or a line break in Excel splits a value onto separate lines on the card
@@ -437,26 +451,44 @@ function fill(el, text) {
   });
 }
 
-// Shrink text until its widest line fits inside the card
-function fitWidth(el, max) {
-  let size = parseFloat(getComputedStyle(el).fontSize);
-  const widest = () => {
-    const r = document.createRange();
-    r.selectNodeContents(el);
-    return r.getBoundingClientRect().width;
-  };
-  while (widest() > max && size > 8) {
-    size -= 0.5;
-    el.style.fontSize = size + 'px';
-  }
+// Font sizes come from the approved design and never grow. Only a name too
+// long for one line may get smaller; other long text wraps and whatever sits
+// below it moves down by the extra height.
+const bottomOf = (el) => el.offsetTop + el.offsetHeight;
+const NAME_MAX_HEIGHT = 58; // from under the ribbon (270px) to above the red rule (328px)
+
+function pushDown(els, by) {
+  if (by <= 0) return;
+  els.forEach((el) => { el.style.top = el.offsetTop + by + 'px'; });
 }
 
-// Shrink wrapping text until all its lines fit above the next label
-function fitHeight(el, max) {
-  let size = parseFloat(getComputedStyle(el).fontSize);
-  while (el.getBoundingClientRect().height > max && size > 9) {
-    size -= 0.5;
-    el.style.fontSize = size + 'px';
+function layoutCard(card) {
+  if (card.classList.contains('card--front')) {
+    const name = card.querySelector('.name');
+    const r = document.createRange();
+    r.selectNodeContents(name);
+    const width = r.getBoundingClientRect().width;
+    if (name.querySelector('br') || width > 286) {
+      const designSize = parseFloat(getComputedStyle(name).fontSize);
+      // Option 1: same single line, scaled down to fit the width
+      const oneLine = name.querySelector('br') ? 0 : Math.floor((designSize * 286 / width) * 2) / 2;
+      // Option 2: two lines, shrunk until they fit above the red rule
+      name.classList.add('name--wrap');
+      let twoLines = designSize;
+      while ((name.offsetHeight > NAME_MAX_HEIGHT || name.scrollWidth > name.clientWidth) && twoLines > 12) {
+        twoLines -= 0.5;
+        name.style.fontSize = twoLines + 'px';
+      }
+      // Keep whichever shows the name bigger
+      if (oneLine >= twoLines) {
+        name.classList.remove('name--wrap');
+        name.style.fontSize = oneLine + 'px';
+      }
+    }
+  } else {
+    const address = card.querySelector('.address');
+    const cnicLabel = card.querySelector('.cnic-label');
+    pushDown([cnicLabel, card.querySelector('.cnic')], bottomOf(address) + 8 - cnicLabel.offsetTop);
   }
 }
 
@@ -682,15 +714,12 @@ const PER_PAGE = 2;
 let list = [];
 let page = 0;
 
-// Fitting needs the cards in the DOM and fonts loaded
+// Layout needs the cards in the DOM and fonts loaded
 async function show(emps) {
   stage.textContent = '';
   emps.forEach((emp) => stage.appendChild(render(emp)));
   await document.fonts.ready;
-  stage.querySelectorAll('.name, .designation').forEach((el) => fitWidth(el, 286));
-  stage.querySelectorAll('.emp-id').forEach((el) => fitWidth(el, 86)); // stay inside the red ribbon
-  // Address wraps; it has room for ~3 lines before "CNIC No:" (top 192px)
-  stage.querySelectorAll('.address').forEach((el) => fitHeight(el, 60));
+  stage.querySelectorAll('.card').forEach(layoutCard);
 }
 
 const pageCount = () => Math.ceil(list.length / PER_PAGE);

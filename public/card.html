@@ -479,8 +479,10 @@ function layoutCard(card) {
         twoLines -= 0.5;
         name.style.fontSize = twoLines + 'px';
       }
-      // Keep whichever shows the name bigger
-      if (oneLine >= twoLines) {
+      // Two-word names (e.g. "Muhammad Shoaib") always stay on one line;
+      // longer names keep whichever option shows them bigger
+      const words = name.textContent.trim().split(/\s+/).length;
+      if (oneLine && (words <= 2 || oneLine >= twoLines)) {
         name.classList.remove('name--wrap');
         name.style.fontSize = oneLine + 'px';
       }
